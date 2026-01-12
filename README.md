@@ -86,7 +86,7 @@ El enfoque se ha desplazado hacia una plataforma web propia que utilice los arch
 
 Si prefieres utilizar herramientas No-Code, los archivos generados siguen siendo compatibles con PowerBI. Hemos movido la guía técnica detallada y los fragmentos de código M/DAX a su propio documento:
 
-👉 **[Guía de Configuración para PowerBI](docs/powerbi_legacy.md)**
+👉 **[Guía de Configuración para PowerBI](docs/powerbi_legacy.md)** y la página web: https://sec2025.netlify.app/
 
 ---
 
