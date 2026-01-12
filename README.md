@@ -90,7 +90,6 @@ Si prefieres utilizar herramientas No-Code, los archivos generados siguen siendo
 
 ---
 
-
 ## 🛠️ Automatización
 
 Puedes automatizar la ejecución mediante el Programador de Tareas (Windows) o Crontab (Linux) ejecutando el script `scripts/end.py`.
