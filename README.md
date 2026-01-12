@@ -84,33 +84,12 @@ El enfoque se ha desplazado hacia una plataforma web propia que utilice los arch
 
 ### 📈 Legacy: Análisis en PowerBI
 
-Aún puedes utilizar los CSVs generados para alimentar tableros de PowerBI.
+Si prefieres utilizar herramientas No-Code, los archivos generados siguen siendo compatibles con PowerBI. Hemos movido la guía técnica detallada y los fragmentos de código M/DAX a su propio documento:
 
-<details>
-<summary>Instrucciones para PowerBI (Click para expandir)</summary>
-
-Para poder manipular nuestros datos en PowerBI hay que seguir estos sencillos pasos:
-
-1. **Importar CSV**: Obtener datos -> Texto/CSV -> `outputs/clientes_afectados_tiempo_real.csv`.
-2. **Transformación**: Se recomienda normalizar los nombres de las regiones para que coincidan con los mapas de PowerBI.
-
-#### Código M Sugerido
-
-```m
-let
-    Source = Csv.Document(File.Contents("C:\Ruta\Al\Archivo\clientes_afectados_tiempo_real.csv"),[Delimiter=",", Columns=9, Encoding=65001, QuoteStyle=QuoteStyle.None]),
-    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"ID_UNICO", type text}, {"TIMESTAMP", type datetime}, {"CLIENTES_AFECTADOS", Int64.Type}}),
-    #"Added Custom" = Table.AddColumn(#"Changed Type", "REGION_CORREGIDA", each "Región de " & [REGION])
-in
-    #"Added Custom"
-```
-
-_Nota: Puedes encontrar tutoriales detallados sobre la creación de medidas DAX para "Última Actualización" y "Top Comunas" en el historial de este repo._
-
-</details>
+👉 **[Guía de Configuración para PowerBI](docs/powerbi_legacy.md)**
 
 ---
+
 
 ## 🛠️ Automatización
 
