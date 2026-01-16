@@ -44,6 +44,12 @@ Gestiona la escritura en `outputs/`.
 - Genera un snapshot de **Tiempo Real** (`clientes_afectados_tiempo_real.csv`) para consumo inmediato de visualizadores.
 - Implementa codificación `utf-8-sig` para compatibilidad nativa con Excel y PowerBI.
 
+### 4. [helper/check_variacion_historica.py](helper/check_variacion_historica.py) (Monitoreo)
+
+Replica lógica analítica avanzada (tipo DAX) para comparar snapshots en tiempo real. 
+- Compara el impacto total de afectados entre la ejecución actual y la anterior.
+- Genera un "Health Check" por consola para validar la consistencia de los datos recolectados.
+
 ---
 
 ## 🚀 Instalación y Uso
@@ -62,11 +68,17 @@ playwright install chromium
 
 ### Ejecución
 
-El script principal que orquesta el flujo es:
+El orquestador principal ahora funciona como un **servicio de monitoreo continuo**:
 
 ```bash
 python scripts/end.py
 ```
+
+**Lo que hace el script:**
+1.  **Loop Infinito**: Se ejecuta cada 5 minutos automáticamente.
+2.  **Extracción Dinámica**: Llama al scraper para obtener el estado actual de la SEC.
+3.  **Transformación y persistencia**: Procesa los datos y actualiza los CSVs.
+4.  **Validación de Variación**: Ejecuta el `Health Check` para informar cambios significativos en el número de clientes afectados directamente en la terminal.
 
 ---
 
@@ -76,11 +88,19 @@ Durante la ingeniería inversa, detectamos que la SEC reporta cortes en "pedazos
 
 ---
 
-## 📊 Visualización Geographic & Legacy
+## 📊 Visualización Geographic & GIS
+
+### 🗺️ Procesamiento de Mapas
+
+Contamos con una infraestructura de mapas basada en archivos GeoJSON y Shapefiles (ESRI) organizada por jerarquía territorial:
+- **Nivel Nacional**: `maps/poligonos_chile/`
+- **Nivel Regional/Provincial/Comunal**: Polígonos detallados con codificación oficial.
+
+Además, el script `scripts/mapas.py` permite **regionalizar** el GeoJSON nacional, subdividiéndolo en archivos independientes por cada región de Chile para optimizar la carga en visores web ligeros.
 
 ### 🌐 Próximos Pasos: El Dashboard Web
 
-El enfoque se ha desplazado hacia una plataforma web propia que utilice los archivos generados y los polígonos GeoJSON en `maps/` para crear una experiencia de usuario superior (GIS).
+El enfoque se ha desplazado hacia una plataforma web propia que utilice los archivos generados y los polígonos GeoJSON en `maps/` para crear una experiencia de usuario superior (GIS) con capas de calor y tendencias temporales.
 
 ### 📈 Legacy: Análisis en PowerBI
 
