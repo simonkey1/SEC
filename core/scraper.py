@@ -1,11 +1,33 @@
 from playwright.sync_api import sync_playwright, Response
+from config import URL_SEC_PRINCIPAL
+
 
 class SECScraper:
+    """Clase encargada de interceptar y capturar datos de la API de la SEC.
+    
+    Esta clase utiliza Playwright para navegar por la página oficial y actuar como
+    un interceptor de red, capturando las respuestas JSON de los endpoints de 
+    datos y hora del servidor.
+    
+    Attributes:
+        registros (list): Lista de diccionarios con los cortes capturados.
+        hora_server (str): Fecha y hora oficial reportada por el servidor SEC.
+    """
+
     def __init__(self):
+        """Inicializa el objeto scraper con listas y valores vacíos."""
         self.registros = []
         self.hora_server = None
 
     def handle_response(self, response: Response):
+        """Manejador de eventos para interceptar respuestas de red.
+        
+        Filtra las URLs de la SEC para extraer datos de cortes (GetPorFecha) 
+        o la hora oficial (GetHoraServer).
+
+        Args:
+            response (Response): Objeto de respuesta capturado por Playwright.
+        """
         # Filtramos por URL, independientemente de si es GET o POST
         if "GetPorFecha" in response.url:
             method = response.request.method
@@ -27,15 +49,20 @@ class SECScraper:
         elif "GetHoraServer" in response.url:
             try:
                 if response.status == 200:
-                    data = response.json()
-                    # GetHoraServer suele devolver [{"FECHA": "23/05/2024 15:30"}]
-                    if isinstance(data, list) and len(data) > 0:
-                        self.hora_server = data[0].get("FECHA")
-                        print(f"🕒 Hora del servidor SEC capturada: {self.hora_server}")
+                    self.hora_server = response.json()
+                    # GetHoraServer suele devolver [{"FECHA": "23/05/2024 15:30"}
             except Exception:
                 pass
     
     def run(self) -> dict:
+        """Inicia el proceso de navegación y captura de datos.
+        
+        Lanza un navegador en modo headless, navega a la página de la SEC,
+        espera las peticiones AJAX y retorna los resultados.
+
+        Returns:
+            dict: Diccionario conteniendo 'data' (registros) y 'hora_server'.
+        """
         self.registros = [] # Limpiamos el saco
         self.hora_server = None
         print("🚀 Iniciando navegador...")
@@ -50,7 +77,7 @@ class SECScraper:
             page.on("response", self.handle_response)
             
             print("🔗 Navegando a la SEC...")
-            page.goto("https://apps.sec.cl/INTONLINEv1/index.aspx", timeout=60000)
+            page.goto(URL_SEC_PRINCIPAL, timeout=60000)
             
             # Esperamos un tiempo prudente para que la página tire sus peticiones AJAX
             print("⏳ Esperando datos (10s)...")

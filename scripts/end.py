@@ -1,8 +1,16 @@
 
+"""Script principal de ejecución (Orquestador).
+
+Este script inicializa el scraper y el transformador, ejecutando un bucle
+infinito que captura datos de la SEC cada 5 minutos, los procesa y los guarda
+en el almacenamiento local.
+"""
 import time
 import sys
 import os
 from datetime import datetime
+
+# Añadir el directorio raíz al path para importaciones modulares
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.scraper import SECScraper
@@ -11,11 +19,18 @@ from core.database import save_data_csv
 from helper.check_variacion_historica import check_variacion_historico
 
 def main():
+    """Bucle principal de ejecución.
+    
+    Instancia los componentes del core y gestiona el ciclo cronometrado
+    de captura, transformación y persistencia.
+    """
     bot = SECScraper()
     transformer = SecDataTransformer()
     
     while True:
-        print(f"\n🔍 [{datetime.now().strftime('%H:%M:%S')}] Iniciando captura de datos...")
+        ahora = datetime.now().strftime('%H:%M:%S')
+        print(f"\n🔍 [{ahora}] Iniciando captura de datos...")
+        
         resultado = bot.run() 
         datos_raw = resultado.get("data", [])
         hora_server = resultado.get("hora_server")
@@ -28,7 +43,7 @@ def main():
         else:
             print("⚠️ No se detectaron datos (posible lentitud de la página o sin cortes).")
         
-        print("⏳ Esperando 5 minutos...")
+        print("⏳ Esperando 5 minutos para la próxima actualización...")
         time.sleep(300)
 
 if __name__ == "__main__":
