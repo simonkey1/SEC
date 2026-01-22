@@ -1,97 +1,129 @@
-"""Sistema de notificaciones por email usando Gmail."""
-import os
 import smtplib
-import logging
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import os
+from dotenv import load_dotenv
+import logging
 
 logger = logging.getLogger(__name__)
 
-def send_capacity_alert(porcentaje: float, size_mb: float):
-    """Envía alerta por Gmail cuando la capacidad está alta.
+class EmailNotifier:
+    """Gestor centralizado de notificaciones por email."""
     
-    Args:
-        porcentaje (float): Porcentaje de capacidad usado
-        size_mb (float): Tamaño en MB de la base de datos
+    def __init__(self):
+        load_dotenv()
+        self.sender = os.getenv("EMAIL_SENDER")
+        self.password = os.getenv("EMAIL_PASSWORD")
+        self.recipient = os.getenv("EMAIL_RECIPIENT")
+        self.smtp_server = "smtp.gmail.com"
+        self.smtp_port = 587
+        self.enabled = os.getenv("EMAIL_NOTIFICATIONS_ENABLED", "true").lower() == "true"
+
+        if not all([self.sender, self.password, self.recipient]):
+            logger.warning("⚠️ Credenciales de email incompletas. Las notificaciones no funcionarán.")
+    
+    def _send_email(self, subject: str, body: str):
+        """Método interno para enviar emails.
         
-    Returns:
-        bool: True si el email se envió correctamente
-    """
-    sender_email = os.getenv("GMAIL_USER")
-    receiver_email = os.getenv("ALERT_EMAIL")
-    password = os.getenv("GMAIL_APP_PASSWORD")
+        Args:
+            subject (str): Asunto del email
+            body (str): Cuerpo del mensaje
+        """
+
+        if not self.enabled:  # Nueva validación
+            logger.info(f"📧 [SIMULADO] Email: {subject}")
+            return
+
+        try:
+            msg = MIMEText(body, 'plain', 'utf-8')
+            msg['Subject'] = subject
+            msg['From'] = self.sender
+            msg['To'] = self.recipient
+
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender, self.password)
+                server.sendmail(self.sender, self.recipient, msg.as_string())
+            
+            logger.info(f"📧 Email enviado: {subject}")
+            
+        except Exception as e:
+            logger.error(f"❌ Error enviando email: {e}")
     
-    if not all([sender_email, receiver_email, password]):
-        logger.error("❌ Faltan credenciales de email en .env")
-        return False
-    
-    # Crear mensaje
-    message = MIMEMultipart("alternative")
-    message["Subject"] = f"🚨 Alerta: Base de datos al {porcentaje:.1f}%"
-    message["From"] = sender_email
-    message["To"] = receiver_email
-    
-    # Cuerpo del email (texto plano)
-    text = f"""
-Hola,
+    def send_capacity_alert(self, porcentaje: float, size_mb: float):
+        """Alerta de capacidad de base de datos."""
+        subject = f"⚠️ Base de datos al {porcentaje:.1f}% de capacidad"
+        body = f"""
+Base de datos de cortes eléctricos - Alerta de capacidad
 
-Tu base de datos de Supabase ha alcanzado el {porcentaje:.1f}% de capacidad ({size_mb:.1f} MB / 500 MB).
+📊 Uso actual: {porcentaje:.2f}%
+💾 Tamaño: {size_mb:.2f} MB / 500 MB (free tier)
 
-Es momento de generar un backup manual. Ejecuta el siguiente comando en tu PC:
-
-    python scripts/backup_manual.py
-
-Esto descargará todos los datos históricos a tu máquina local.
+⚠️ Acciones recomendadas:
+- Ejecutar limpieza de datos antiguos (cleanup_old_data.py)
+- Revisar políticas de retención
+- Considerar migración a plan pago si es necesario
 
 --
-Sistema de monitoreo automático SEC
-Proyecto: Monitoreo de Cortes Eléctricos Chile
-    """
+Sistema de Monitoreo de Cortes Eléctricos
+        """
+        self._send_email(subject, body)
     
-    # Cuerpo HTML (opcional, más bonito)
-    html = f"""
-<html>
-  <body>
-    <h2 style="color: #ff6b6b;">🚨 Alerta de Capacidad</h2>
-    <p>Tu base de datos de Supabase ha alcanzado:</p>
-    <div style="background: #f8f9fa; padding: 20px; border-left: 4px solid #ff6b6b;">
-      <h3 style="margin: 0;">{porcentaje:.1f}% de capacidad</h3>
-      <p style="margin: 5px 0;">📊 {size_mb:.1f} MB / 500 MB</p>
-    </div>
-    <h3>Acción requerida:</h3>
-    <p>Ejecuta el siguiente comando en tu PC para descargar el backup:</p>
-    <pre style="background: #2d3748; color: #68d391; padding: 10px; border-radius: 5px;">
-python scripts/backup_manual.py
-    </pre>
-    <hr>
-    <p style="color: #718096; font-size: 12px;">
-      Sistema de monitoreo automático<br>
-      Proyecto: Monitoreo de Cortes Eléctricos Chile
-    </p>
-  </body>
-</html>
-    """
+    def send_scraper_error(self, error_msg: str, intentos: int):
+        """Alerta de error en el scraper."""
+        subject = f"🔴 Error en scraper SEC (Intento {intentos})"
+        body = f"""
+El scraper de datos SEC ha fallado.
+
+❌ Error: {error_msg}
+🔄 Intentos realizados: {intentos}
+
+El sistema continuará intentando automáticamente.
+
+--
+Sistema de Monitoreo de Cortes Eléctricos
+        """
+        self._send_email(subject, body)
     
-    # Adjuntar ambas versiones
-    part1 = MIMEText(text, "plain")
-    part2 = MIMEText(html, "html")
-    message.attach(part1)
-    message.attach(part2)
+    def send_circuit_breaker_open(self, failures: int):
+        """Alerta de Circuit Breaker abierto."""
+        subject = "🚨 Circuit Breaker ABIERTO - Scraper detenido"
+        body = f"""
+El Circuit Breaker se ha activado por múltiples fallos consecutivos.
+
+⚠️ Fallos detectados: {failures}
+🛑 Estado: OPEN (scraper detenido temporalmente)
+
+El sistema se reactivará automáticamente después del período de cooldown.
+
+--
+Sistema de Monitoreo de Cortes Eléctricos
+        """
+        self._send_email(subject, body)
     
-    try:
-        # Conectar a Gmail SMTP
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message.as_string())
-        
-        logger.info(f"✅ Email de alerta enviado a {receiver_email}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Error enviando email: {e}")
-        # Fallback: mostrar en consola
-        print(f"\n{'='*60}")
-        print(f"🚨 ALERTA: DB al {porcentaje:.1f}% ({size_mb:.1f} MB)")
-        print("Ejecuta: python scripts/backup_manual.py")
-        print(f"{'='*60}\n")
-        return False
+    def send_data_quality_alert(self, issue: str):
+        """Alerta de calidad de datos."""
+        subject = "⚠️ Problema de calidad de datos"
+        body = f"""
+Se detectó un problema en la calidad de los datos scrapeados.
+
+🔍 Problema: {issue}
+
+Revisa los logs para más detalles.
+
+--
+Sistema de Monitoreo de Cortes Eléctricos
+        """
+        self._send_email(subject, body)
+
+
+# Instancia global para reutilizar
+notifier = EmailNotifier()
+
+# Funciones de conveniencia (backward compatibility)
+def send_capacity_alert(porcentaje: float, size_mb: float):
+    """Wrapper para compatibilidad con código existente."""
+    notifier.send_capacity_alert(porcentaje, size_mb)
+
+def send_email(subject: str, body: str):
+    """Wrapper genérico."""
+    notifier._send_email(subject, body)

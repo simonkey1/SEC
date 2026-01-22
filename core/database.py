@@ -5,6 +5,11 @@ para guardar los datos procesados en formatos CSV (local).
 """
 import pandas as pd
 import os
+from dotenv import load_dotenv
+import logging
+from supabase import create_client, Client
+from core.notifications import send_capacity_alert
+logger = logging.getLogger(__name__)
 
 # Rutas globales para gestión de archivos
 
@@ -49,3 +54,48 @@ def save_data_csv(registros):
 
 def save_data_sql():
      pass
+
+
+
+def check_database_capacity(threshold_percent = 85):
+    load_dotenv()
+
+    url: str = os.environ.get("SUPABASE_URL")
+    key: str = os.environ.get("SUPABASE_KEY")
+
+    supabase: Client = create_client(url, key)
+    try:
+
+        response = (
+        supabase.table('fact_interrupciones')
+        .select('*', count='exact').execute()
+    )
+        total_filas = response.count
+
+
+        size_mb = (total_filas * 200) / 1024 / 1024
+
+        porcentaje = (size_mb / 500) * 100
+        alert_sent = False
+        if porcentaje >= threshold_percent:
+            send_capacity_alert(porcentaje=porcentaje, size_mb=size_mb)
+            logger.warning(f"⚠️ Base de datos al {porcentaje:.2f}% de capacidad")
+            alert_sent = True
+        
+        # 5. Retornar estado
+        return {
+            "size_mb": round(size_mb, 2),
+            "porcentaje": round(porcentaje, 2),
+            "alert_sent": alert_sent,
+            "total_filas": total_filas  # Extra: útil para debugging
+            }
+        
+    except Exception as e:
+        logger.error(f"❌ Error verificando capacidad: {e}")
+        return {
+            "size_mb": 0,
+            "porcentaje": 0,
+            "alert_sent": False,
+            "total_filas": 0
+        }
+

@@ -1,5 +1,5 @@
 
-
+import unicodedata
 from datetime import datetime
 import pandas as pd
 import hashlib
@@ -17,6 +17,22 @@ class SecDataTransformer():
     def __init__(self):
         """Inicializa el transformador."""
         pass
+
+    def _normalize_text(self, text: str) -> str:
+        """Normaliza texto: mayúsculas, sin acentos, sin espacios extra.
+        
+        Args:
+            text (str): Texto a normalizar
+            
+        Returns:
+            str: Texto normalizado
+        """
+        # Quitar acentos
+        text_nfd = unicodedata.normalize('NFD', text)
+        text_ascii = text_nfd.encode('ASCII', 'ignore').decode('ASCII')
+        
+        # Mayúsculas y quitar espacios extra
+        return text_ascii.upper().strip()
 
     def _parse_server_time(self, raw):
         """Intenta parsear la hora del servidor (lista o str), cae en local con aviso."""
@@ -74,9 +90,9 @@ class SecDataTransformer():
         registros_procesados = []
 
         for _, row in df_grouped.iterrows():
-            region = str(row["NOMBRE_REGION"]).strip()
-            comuna = str(row["NOMBRE_COMUNA"]).strip()
-            empresa = str(row["NOMBRE_EMPRESA"]).strip()
+            region = self._normalize_text(str(row["NOMBRE_REGION"]))
+            comuna = self._normalize_text(str(row["NOMBRE_COMUNA"]))
+            empresa = self._normalize_text(str(row["NOMBRE_EMPRESA"]))
             
             # FECHA_INT_STR ya viene como string de la SEC (ej: 19/01/2026)
             fecha_str = str(row["FECHA_INT_STR"]).strip()

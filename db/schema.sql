@@ -31,10 +31,11 @@ CREATE TABLE fact_interrupciones(
     id_geografia INT NOT NULL,
     id_empresa INT NOT NULL,
     clientes_afectados INT NOT NULL,
-    hash_id VARCHAR(100) NOT NULL UNIQUE,
+    hash_id VARCHAR(128) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (id_tiempo) REFERENCES dim_tiempo(id_tiempo),
-    FOREIGN KEY (id_geografia) REFERENCES dim_geografia(id_geografia)
+    FOREIGN KEY (id_geografia) REFERENCES dim_geografia(id_geografia),
     FOREIGN KEY (id_empresa) REFERENCES dim_empresa(id_empresa)
 );
 

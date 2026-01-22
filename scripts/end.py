@@ -20,6 +20,8 @@ from core.circuitbreaker import CircuitBreaker
 import logging
 logger = logging.getLogger(__name__)
 from helper.check_variacion_historica import check_variacion_historico
+from scripts.cleanup_old_data import cleanup_old_records
+from core.database import check_database_capacity
 
 def main():
     """Bucle principal de ejecución.
@@ -32,6 +34,8 @@ def main():
 
     bot = SECScraper()
     transformer = SecDataTransformer()
+
+    ciclo_contador = 0
     
     while True:
         ahora = datetime.now().strftime('%H:%M:%S')
@@ -51,8 +55,7 @@ def main():
                 else:
                     print("⚠️ No se detectaron datos (posible lentitud de la página o sin cortes).")
                 
-                print("⏳ Esperando 5 minutos para la próxima actualización...")
-                time.sleep(300)
+                
 
             except Exception as e:
                 breaker.registrar_fallo()
@@ -60,7 +63,16 @@ def main():
         else:
             logger.info("Circuito abierto...")
 
-        
+        if ciclo_contador % 288 == 0:
+            estado = check_database_capacity(threshold_percent=85)
+            logger.info(f"📊 DB: {estado['porcentaje']:.1f}% ({estado['size_mb']} MB)")
+            
+        if ciclo_contador % 2016 == 0:
+            deleted = cleanup_old_records(days_to_keep=30)
+            logger.info(f'Limpieza : {deleted} registros borrados')    
+
+        ciclo_contador +=1
+        print("⏳ Esperando 5 minutos para la próxima actualización...")
         time.sleep(300)
         
 if __name__ == "__main__":
