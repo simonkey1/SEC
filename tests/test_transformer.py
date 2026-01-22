@@ -90,7 +90,5 @@ class TestTransformer:
         for actualizado_str, expected_timedelta in test_cases:
             parsed = SecDataTransformer.parse_actualizado_hace(actualizado_str)
             assert parsed == expected_timedelta
-    
-    def test_pandas_sum_same_number 
 
 # Ejecutar: pytest tests/test_transformer.py -v

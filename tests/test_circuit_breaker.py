@@ -1,47 +1,57 @@
-# tests/test_circuit_breaker.py
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from core.circuitbreaker import States, CircuitBreaker
 import time
 import pytest
-from circuitbreaker import CircuitBreaker
+
 
 class TestCircuitBreaker:
-    """Tests para circuit breaker"""
-    
-    def test_circuit_breaker_success(self):
-        """✅ Circuit breaker permite requests cuando OK"""
-        breaker = CircuitBreaker(threshold=3)
-        
-        assert breaker.is_healthy() == True
-        breaker.record_success()
-        assert breaker.is_healthy() == True
-    
-    def test_circuit_breaker_fails_after_threshold(self):
-        """✅ Circuit breaker detiene después de 3 fallos"""
-        breaker = CircuitBreaker(threshold=3)
-        
-        breaker.record_failure()
-        assert breaker.is_healthy() == True
-        
-        breaker.record_failure()
-        assert breaker.is_healthy() == True
-        
-        breaker.record_failure()
-        assert breaker.is_healthy() == False  # ← ABIERTO
-    
-    def test_circuit_breaker_resets(self):
-        """✅ Circuit breaker se resetea después de cooldown"""
-        breaker = CircuitBreaker(threshold=3, cooldown_seconds=0.1)
-        
-        # Genera 3 fallos
-        for _ in range(3):
-            breaker.record_failure()
-        
-        assert breaker.is_healthy() == False
-        
-        # Espera cooldown
-        time.sleep(0.2)
-        
-        # Intenta reset
-        breaker.attempt_reset()
-        assert breaker.is_healthy() == True
+    @pytest.fixture
+    def breaker(self):
+        # Retorna una instancia fresca para cada test
+        return CircuitBreaker(failure_treshold=2, recovery_timeout=2)
 
-# Ejecutar: pytest tests/test_circuit_breaker.py -v
+    def test_initial_state(self, breaker):
+        assert breaker.state == States.CLOSED
+        assert breaker.puede_ejecutar() is True
+
+
+    def test_blocks_when_open(self,breaker):
+        breaker.registrar_fallo()
+        breaker.registrar_fallo()
+        breaker.registrar_fallo()
+        assert breaker.puede_ejecutar() is False                                                              
+
+    def test_automatically_recovers_after_timeout(self, breaker):
+        breaker.registrar_fallo()
+        assert breaker.state == States.CLOSED # Aún no llega al umbral (2)
+        breaker.registrar_fallo()
+        assert breaker.last_failure_time is not None
+        assert breaker.state == States.OPEN
+        time.sleep(3)
+        assert breaker.puede_ejecutar() is True
+        
+
+    def test_tolerancia_cero(self, breaker):
+        breaker.state = States.HALF_OPEN
+        breaker.registrar_fallo()
+        assert breaker.state == States.OPEN 
+        assert breaker.fail_counter == breaker.failure_treshold
+
+
+    def test_happy_end(self, breaker):
+        breaker.state = States.HALF_OPEN
+        breaker.registrar_exito()
+        assert breaker.state == States.CLOSED
+        assert breaker.fail_counter == 0
+
+    def test_reset_on_success(self,breaker):
+        breaker.registrar_fallo()
+        breaker.registrar_exito()
+        
+        assert breaker.state == States.CLOSED
+        assert breaker.fail_counter == 0
+        assert breaker.last_failure_time is None

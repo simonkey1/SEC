@@ -1,56 +1,44 @@
--- Esquema SQL para Supabase / PostgreSQL
--- Proyecto: Monitoreo de Cortes de Luz (SEC Scraper)
+CREATE TABLE dim_geografia (
+    -- Aquí define las columnas con sus tipos
+    -- Recuerda: 1 PK, 4 columnas de texto para los nombres
 
--- 1. Tablas Dimensionales (Normalización)
-CREATE TABLE IF NOT EXISTS regiones (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) UNIQUE NOT NULL
+    id_geografia SERIAL PRIMARY KEY,
+    nombre_comuna VARCHAR(100) NOT NULL,
+    nombre_region VARCHAR(100) NOT NULL,
+    nombre_provincia VARCHAR(100) DEFAULT '',
+    codigo_comuna INT DEFAULT 0
+
 );
 
-CREATE TABLE IF NOT EXISTS empresas (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) UNIQUE NOT NULL
+CREATE TABLE dim_empresa(
+    id_empresa SERIAL PRIMARY KEY,
+    nombre_empresa VARCHAR(100) NOT NULL UNIQUE,
+    rut_empresa VARCHAR(100) DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS comunas (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    region_id INTEGER REFERENCES regiones(id),
-    UNIQUE(nombre, region_id)
+CREATE TABLE dim_tiempo(
+    id_tiempo BIGINT PRIMARY KEY,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    año SMALLINT NOT NULL,
+    mes SMALLINT NOT NULL,
+    dia SMALLINT NOT NULL
 );
 
--- 2. Tabla Histórica (Data Lake / Time Series)
--- Almacena cada captura realizada por el scraper
-CREATE TABLE IF NOT EXISTS cortes_historico (
-    id BIGSERIAL PRIMARY KEY,
-    comuna_id INTEGER REFERENCES comunas(id),
-    empresa_id INTEGER REFERENCES empresas(id),
-    clientes_afectados INTEGER NOT NULL,
-    clientes_totales INTEGER NOT NULL,
-    porcentaje_afectados NUMERIC(10, 2),
-    timestamp_sec TIMESTAMPTZ NOT NULL, -- Hora oficial del servidor SEC
-    id_unico_intercomuna VARCHAR(255),  -- ID_UNICO original del transformer
-    created_at TIMESTAMPTZ DEFAULT NOW()
+CREATE TABLE fact_interrupciones(
+    id_fact BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_tiempo BIGINT NOT NULL,
+    id_geografia INT NOT NULL,
+    id_empresa INT NOT NULL,
+    clientes_afectados INT NOT NULL,
+    hash_id VARCHAR(100) NOT NULL UNIQUE,
+
+    FOREIGN KEY (id_tiempo) REFERENCES dim_tiempo(id_tiempo),
+    FOREIGN KEY (id_geografia) REFERENCES dim_geografia(id_geografia)
+    FOREIGN KEY (id_empresa) REFERENCES dim_empresa(id_empresa)
 );
 
--- 3. Tabla de Tiempo Real (Estado Actual)
--- Optimizada para el dashboard Svelte. Se actualiza mediante UPSERT.
-CREATE TABLE IF NOT EXISTS cortes_tiempo_real (
-    id_unico VARCHAR(255) PRIMARY KEY, -- COMUNA_EMPRESA
-    region_id INTEGER REFERENCES regiones(id),
-    comuna_id INTEGER REFERENCES comunas(id),
-    empresa_id INTEGER REFERENCES empresas(id),
-    clientes_afectados INTEGER NOT NULL,
-    clientes_totales INTEGER NOT NULL,
-    porcentaje_afectados NUMERIC(10, 2),
-    timestamp_sec TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Índices para optimizar consultas frecuentes
-CREATE INDEX IF NOT EXISTS idx_historico_timestamp ON cortes_historico(timestamp_sec DESC);
-CREATE INDEX IF NOT EXISTS idx_historico_comuna ON cortes_historico(comuna_id);
-
--- Comentario sobre la estrategia:
--- - `cortes_historico` crecerá con cada ejecución del scraper (cada 5 min).
--- - `cortes_tiempo_real` contendrá solo el "último Snapshot" de cada punto de corte.
+CREATE INDEX idx_tiempo ON fact_interrupciones(id_tiempo DESC);
+CREATE INDEX idx_geografia ON fact_interrupciones(id_geografia);
+CREATE INDEX idx_empresa ON fact_interrupciones(id_empresa);
+CREATE INDEX inx_created_at ON fact_interrupciones(created_at DESC);
