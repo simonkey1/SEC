@@ -6,11 +6,147 @@ to save processed data in CSV formats (local).
 import pandas as pd
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 import logging
 from supabase import create_client, Client
 logger = logging.getLogger(__name__)
 
 # Rutas globales para gestión de archivos
+
+
+# En core/database.py
+
+class SupabaseRepository:
+    """Repository pattern for Supabase data persistence.
+    
+    Manages dimension tables (get_or_create) and fact table insertions.
+    """
+    
+    def __init__(self):
+        """Initialize Supabase client with credentials from .env"""
+        load_dotenv()
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        self.supabase = create_client(url, key)
+    
+    def get_or_create_geografia(self, region: str, comuna: str) -> int:
+        """Get or create geography dimension record."""
+        
+        resultado = self.supabase.table('dim_geografia') \
+        .select('id_geografia') \
+        .eq('nombre_region', region) \
+        .eq('nombre_comuna', comuna) \
+        .execute()
+
+        if resultado.data and len(resultado.data) > 0:
+            return resultado.data[0]['id_geografia']
+        
+        nuevo = self.supabase.table('dim_geografia') \
+                .insert({'nombre_region': region,
+                        'nombre_comuna': comuna
+                        }) \
+                        .execute()
+        return nuevo.data[0]['id_geografia']
+        
+
+    
+    def get_or_create_empresa(self, empresa: str) -> int:
+        """Get or create company dimension record."""
+        resultado = self.supabase.table('dim_empresa') \
+        .select('id_empresa') \
+        .eq('nombre_empresa', empresa) \
+        .execute()
+
+        if resultado.data and len(resultado.data) > 0:
+            return resultado.data[0]['id_empresa']
+        
+        nuevo = self.supabase.table('dim_empresa') \
+                .insert({'nombre_empresa': empresa
+                        }) \
+                        .execute()
+        return nuevo.data[0]['id_empresa']
+    
+    def get_or_create_tiempo(self, timestamp_str: str) -> int:
+        """Get or create time dimension record."""
+    
+    
+    # 1. Parsear timestamp
+        dt = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+        
+        # 2. Generar id_tiempo como entero (YYYYMMDDHHMM)
+        id_tiempo = int(dt.strftime("%Y%m%d%H%M"))
+        
+        # 3. Buscar si existe
+        resultado = self.supabase.table('dim_tiempo') \
+            .select('id_tiempo') \
+            .eq('id_tiempo', id_tiempo) \
+            .execute()
+
+        if resultado.data and len(resultado.data) > 0:
+            return id_tiempo  # ← Retornar el id_tiempo, no .data[0]
+        
+        # 4. Insertar nuevo
+        self.supabase.table('dim_tiempo') \
+            .insert({
+                'id_tiempo': id_tiempo,
+                'fecha': dt.date().isoformat(),  # "2026-01-23"
+                'hora': dt.time().isoformat(),   # "14:30:00"
+                'año': dt.year,
+                'mes': dt.month,
+                'dia': dt.day
+            }) \
+            .execute()
+        
+        return id_tiempo  # ← Retornar el id_tiempo
+    
+    def save_records(self, registros: list) -> dict:
+        """Save processed records to fact table."""
+        insertados = 0
+        duplicados = 0
+        errores = 0
+        
+        for registro in registros:
+            try:
+                # Obtener FKs usando self (ya tienes la instancia)
+                id_geografia = self.get_or_create_geografia(
+                    region=registro['REGION'],
+                    comuna=registro['COMUNA']
+                )
+                id_empresa = self.get_or_create_empresa(
+                    empresa=registro['EMPRESA']
+                )
+                id_tiempo = self.get_or_create_tiempo(
+                    timestamp_str=registro['TIMESTAMP']
+                )
+                
+                # Insertar en fact table
+                self.supabase.table('fact_interrupciones').insert({
+                    'id_tiempo': id_tiempo,
+                    'id_geografia': id_geografia,
+                    'id_empresa': id_empresa,
+                    'clientes_afectados': registro['CLIENTES_AFECTADOS'],
+                    'hash_id': registro['ID_UNICO']
+                }).execute()
+                
+                insertados += 1
+                
+            except Exception as e:
+                if 'duplicate' in str(e).lower() or 'unique' in str(e).lower():
+                    duplicados += 1
+                else:
+                    errores += 1
+                    logger.error(f"Error insertando: {e}")
+        
+        # Logging DESPUÉS del for (misma indentación que el for)
+        logger.info(f"✅ Insertados: {insertados} | Duplicados: {duplicados} | Errores: {errores}")
+        
+        return {
+            'insertados': insertados,
+            'duplicados': duplicados,
+            'errores': errores
+        }
+
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) 
 BASE_DIR = os.path.dirname(SCRIPT_DIR)

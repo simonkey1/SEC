@@ -1,10 +1,13 @@
-
 """Main execution script (Orchestrator).
 
 This script initializes the scraper and transformer, executing an
 infinite loop that captures SEC data every 5 minutes, processes it and saves
 it to local storage.
 """
+
+from helper.check_variacion_historica import check_variacion_historico
+from scripts.cleanup_old_data import cleanup_old_records
+from core.database import check_database_capacity
 import time
 import sys
 import os
@@ -15,30 +18,30 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from core.scraper import SECScraper
 from core.tranformer import SecDataTransformer
-from core.database import save_data_csv
+from core.database import save_data_csv, SupabaseRepository
 from core.circuitbreaker import CircuitBreaker
 import logging
+
 logger = logging.getLogger(__name__)
-from helper.check_variacion_historica import check_variacion_historico
-from scripts.cleanup_old_data import cleanup_old_records
-from core.database import check_database_capacity
+
 
 def main():
     """Main execution loop.
-    
+
     Instantiates core components and manages the timed cycle
     of capture, transformation and persistence.
     """
 
     breaker = CircuitBreaker(3, 600)
+    repo = SupabaseRepository()
 
     bot = SECScraper()
     transformer = SecDataTransformer()
 
     ciclo_contador = 0
-    
+
     while True:
-        ahora = datetime.now().strftime('%H:%M:%S')
+        ahora = datetime.now().strftime("%H:%M:%S")
         print(f"\n🔍 [{ahora}] Iniciando captura de datos...")
         if breaker.puede_ejecutar():
             try:
@@ -46,37 +49,45 @@ def main():
                 breaker.registrar_exito()
                 datos_raw = resultado.get("data", [])
                 hora_server = resultado.get("hora_server")
-                
+
                 if datos_raw:
                     print(f"✅ Se capturaron {len(datos_raw)} registros crudos.")
-                    datos_listos = transformer.transform(datos_raw, server_time=hora_server)
+                    datos_listos = transformer.transform(
+                        datos_raw, server_time=hora_server
+                    )
+
+                    # Save to Supabase (production)
+                    resultado_db = repo.save_records(datos_listos)
+                    logger.info(
+                        f"💾 Supabase: {resultado_db['insertados']} insertados, {resultado_db['duplicados']} duplicados"
+                    )
+
+                    # Save to CSV (legacy/backup)
                     save_data_csv(datos_listos)
                     check_variacion_historico()
                 else:
-                    print("⚠️ No se detectaron datos (posible lentitud de la página o sin cortes).")
-                
-                
+                    print(
+                        "⚠️ No se detectaron datos (posible lentitud de la página o sin cortes)."
+                    )
 
             except Exception as e:
                 breaker.registrar_fallo()
-                logger.warning(f'Falla {e}')
+                logger.warning(f"Falla {e}")
         else:
             logger.info("Circuito abierto...")
 
         if ciclo_contador % 288 == 0:
             estado = check_database_capacity(threshold_percent=85)
             logger.info(f"📊 DB: {estado['porcentaje']:.1f}% ({estado['size_mb']} MB)")
-            
+
         if ciclo_contador % 2016 == 0:
             deleted = cleanup_old_records(days_to_keep=30)
-            logger.info(f'Limpieza : {deleted} registros borrados')    
+            logger.info(f"Limpieza : {deleted} registros borrados")
 
-        ciclo_contador +=1
+        ciclo_contador += 1
         print("⏳ Esperando 5 minutos para la próxima actualización...")
         time.sleep(300)
-        
+
+
 if __name__ == "__main__":
     main()
-
-
-
