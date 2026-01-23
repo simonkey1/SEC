@@ -1,0 +1,13 @@
+
+
+version: '3.8'
+
+services:
+  luz-scraper:
+    build: .
+    container_name: luz-monitor
+    env_file:
+      - .env
+    volumes:
+      - ./outputs:/app/outputs
+    restart: unless-stopped

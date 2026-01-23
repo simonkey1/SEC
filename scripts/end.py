@@ -5,9 +5,6 @@ infinite loop that captures SEC data every 5 minutes, processes it and saves
 it to local storage.
 """
 
-from helper.check_variacion_historica import check_variacion_historico
-from scripts.cleanup_old_data import cleanup_old_records
-from core.database import check_database_capacity
 import time
 import sys
 import os
@@ -16,9 +13,10 @@ from datetime import datetime
 # Añadir el directorio raíz al path para importaciones modulares
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from cleanup_old_data import cleanup_old_records
+from core.database import check_database_capacity, SupabaseRepository
 from core.scraper import SECScraper
 from core.tranformer import SecDataTransformer
-from core.database import save_data_csv, SupabaseRepository
 from core.circuitbreaker import CircuitBreaker
 import logging
 
@@ -53,7 +51,7 @@ def main():
                 if datos_raw:
                     print(f"✅ Se capturaron {len(datos_raw)} registros crudos.")
                     datos_listos = transformer.transform(
-                        datos_raw, server_time=hora_server
+                        datos_raw, server_time_raw=hora_server
                     )
 
                     # Save to Supabase (production)
@@ -61,10 +59,6 @@ def main():
                     logger.info(
                         f"💾 Supabase: {resultado_db['insertados']} insertados, {resultado_db['duplicados']} duplicados"
                     )
-
-                    # Save to CSV (legacy/backup)
-                    save_data_csv(datos_listos)
-                    check_variacion_historico()
                 else:
                     print(
                         "⚠️ No se detectaron datos (posible lentitud de la página o sin cortes)."

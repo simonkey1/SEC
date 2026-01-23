@@ -17,7 +17,7 @@ A production-grade data engineering pipeline that evolved from a simple scraping
    - Automated email alerts (capacity, errors, data quality)
    - 30-day data retention with automated cleanup
    - Health monitoring with threshold-based alerts
-4. **Professional Testing**: 22 comprehensive tests (unit + integration) with 100% pass rate
+4. **Professional Testing**: 30 comprehensive tests (unit + integration) with 100% pass rate
 5. **Cloud Database**: Supabase (PostgreSQL) with Star Schema design for analytics
 
 ---
@@ -44,10 +44,16 @@ A production-grade data engineering pipeline that evolved from a simple scraping
 
 #### 3. [core/database.py](core/database.py) - Data Persistence & Monitoring
 
-**Dual storage strategy**:
+**SupabaseRepository (Repository Pattern)**:
 
-- CSV exports (`outputs/`) for historical records and real-time snapshots
-- **Supabase integration** with capacity monitoring:
+- **Smart dimensional modeling**:
+  - `get_or_create_geografia()`: Manages dim_geografia (region + comuna)
+  - `get_or_create_empresa()`: Manages dim_empresa (company names)
+  - `get_or_create_tiempo()`: Manages dim_tiempo with YYYYMMDDHHMM integer key
+  - `save_records()`: Inserts fact_interrupciones with automatic FK resolution
+- **Deduplication**: Uses `hash_id` (MD5 of comuna+empresa+timestamp) with UNIQUE constraint
+- **Dual storage**: Supabase (production) + CSV (legacy/backup)
+- **Capacity monitoring**:
   - `check_database_capacity()`: Monitors DB size vs 500MB limit
   - Triggers email alerts at 85% threshold
   - Returns metrics: `size_mb`, `porcentaje`, `total_filas`, `alert_sent`
@@ -156,7 +162,7 @@ pytest tests/integration/ -v   # Integration tests only
 
 ## 🧪 Testing Strategy
 
-### Test Coverage (22 tests - 100% passing)
+### Test Coverage (30 tests - 100% passing)
 
 **Unit Tests** (`tests/unit/`):
 
@@ -166,6 +172,7 @@ pytest tests/integration/ -v   # Integration tests only
 
 **Integration Tests** (`tests/integration/`):
 
+- `test_supabase_repository_integration.py`: 8 tests - Repository pattern, get_or_create, save_records, duplicate handling
 - `test_cleanup_integration.py`: Verifies 30-day retention policy with real Supabase data
 - `test_health_check_integration.py`: Validates monitoring metrics and alert triggering
 - `test_notifications_integration.py`: Real email delivery + flag respect verification

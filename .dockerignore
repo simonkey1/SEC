@@ -1,0 +1,25 @@
+
+
+# Entornos virtuales
+ .venv/, venv/, env/
+
+# Cache de Python
+__pycache__/, *.pyc, *.pyo
+
+# Archivos de prueba
+.pytest_cache/, *.log
+
+# Git
+.git/, .gitignore
+
+# IDE
+.vscode/, .idea/
+
+# Data temporal
+outputs/*.csv
+
+# Sistema
+.DS_Store, Thumbs.db
+
+# Docker (no copiar estos archivos a sí mismos)
+Dockerfile, docker-compose.yml, .dockerignore
