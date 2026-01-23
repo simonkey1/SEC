@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from config import URL_SEC_GET_POR_FECHA, URL_SEC_GET_HORA_SERVER, STATUS_CODE, METHOD_POST
 
 class TestScraper(unittest.TestCase):
-    """Tests para verificar que scraper funciona correctamente"""
+    """Tests to verify scraper works correctly"""
    
     def create_mock_response(self, url, json_data, status=STATUS_CODE, method=METHOD_POST):
         """Fábrica de objetos response para evitar boilerplate"""
@@ -23,14 +23,19 @@ class TestScraper(unittest.TestCase):
         mock.json.return_value = json_data
         return mock
     def test_hora_server_format_valido(self):
-        """✅ Verifica que el formato de fecha sea el esperado por el Transformer"""
+        """✅ Verifies date format is as expected by Transformer"""
         bot = SECScraper()
         mock_data = [{"FECHA": "19/01/2026 15:30"}]
         bot.handle_response(self.create_mock_response(URL_SEC_GET_HORA_SERVER, mock_data))
     
-    # Aquí solo probamos que NO explote al parsear
+        # hora_server ahora guarda la lista completa
+        assert bot.hora_server == mock_data
+        assert isinstance(bot.hora_server, list)
+        assert len(bot.hora_server) > 0
+        
+        # Verificar que la fecha dentro tiene el formato correcto
         try:
-            datetime.strptime(bot.hora_server, "%d/%m/%Y %H:%M")
+            datetime.strptime(bot.hora_server[0]["FECHA"], "%d/%m/%Y %H:%M")
         except ValueError:
             pytest.fail("La SEC cambió el formato de fecha esperado")
 
@@ -41,9 +46,10 @@ class TestScraper(unittest.TestCase):
         data = [{"FECHA": fecha_test}]
         mock = self.create_mock_response(URL_SEC_GET_HORA_SERVER, data)
         bot.handle_response(mock)
-        assert bot.hora_server == fecha_test
-        assert isinstance(bot.hora_server, str)
+        assert bot.hora_server == data
+        assert isinstance(bot.hora_server, list)
         assert bot.hora_server is not None
+        assert bot.hora_server[0]["FECHA"] == fecha_test
         
     
     def test_get_hora_server_reasonable(self):
@@ -54,7 +60,7 @@ class TestScraper(unittest.TestCase):
         data = [{"FECHA": fecha_test}]
         mock = self.create_mock_response(URL_SEC_GET_HORA_SERVER, data)
         bot.handle_response(mock)
-        date_obj = datetime.strptime(bot.hora_server, date_format)
+        date_obj = datetime.strptime(bot.hora_server[0]["FECHA"], date_format)
         assert date_obj < datetime.now() + timedelta(days=1)
     
     def test_handle_response_success(self):

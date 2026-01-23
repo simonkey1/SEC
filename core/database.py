@@ -1,14 +1,13 @@
-"""Módulo de persistencia y gestión de rutas de datos.
+"""Data persistence and path management module.
 
-Este módulo se encarga de definir las rutas de almacenamiento y proveer funciones
-para guardar los datos procesados en formatos CSV (local).
+This module defines storage paths and provides functions
+to save processed data in CSV formats (local).
 """
 import pandas as pd
 import os
 from dotenv import load_dotenv
 import logging
 from supabase import create_client, Client
-from core.notifications import send_capacity_alert
 logger = logging.getLogger(__name__)
 
 # Rutas globales para gestión de archivos
@@ -25,9 +24,9 @@ csv_tiempo_real = os.path.join(OUTPUT_DIR, "clientes_afectados_tiempo_real.csv")
 csv_historico = os.path.join(OUTPUT_DIR, "clientes_afectados_historico.csv")
 
 def save_data_csv(registros):
-    """Guarda los registros procesados en archivos CSV locales.
+    """Saves processed records to local CSV files.
     
-    Gestiona dos archivos: uno histórico (incremental y sin duplicados) y
+    Manages two files: one historical (incremental without duplicates) and
     uno de tiempo real (sobrescritura del estado actual).
 
     Args:
@@ -78,7 +77,9 @@ def check_database_capacity(threshold_percent = 85):
         porcentaje = (size_mb / 500) * 100
         alert_sent = False
         if porcentaje >= threshold_percent:
-            send_capacity_alert(porcentaje=porcentaje, size_mb=size_mb)
+            from core.notifications import EmailNotifier
+            notifier = EmailNotifier()
+            notifier.send_capacity_alert(porcentaje=porcentaje, size_mb=size_mb, total_filas=total_filas)
             logger.warning(f"⚠️ Base de datos al {porcentaje:.2f}% de capacidad")
             alert_sent = True
         

@@ -1,9 +1,9 @@
 
-"""Script principal de ejecución (Orquestador).
+"""Main execution script (Orchestrator).
 
-Este script inicializa el scraper y el transformador, ejecutando un bucle
-infinito que captura datos de la SEC cada 5 minutos, los procesa y los guarda
-en el almacenamiento local.
+This script initializes the scraper and transformer, executing an
+infinite loop that captures SEC data every 5 minutes, processes it and saves
+it to local storage.
 """
 import time
 import sys
@@ -24,10 +24,10 @@ from scripts.cleanup_old_data import cleanup_old_records
 from core.database import check_database_capacity
 
 def main():
-    """Bucle principal de ejecución.
+    """Main execution loop.
     
-    Instancia los componentes del core y gestiona el ciclo cronometrado
-    de captura, transformación y persistencia.
+    Instantiates core components and manages the timed cycle
+    of capture, transformation and persistence.
     """
 
     breaker = CircuitBreaker(3, 600)

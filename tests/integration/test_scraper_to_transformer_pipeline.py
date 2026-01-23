@@ -12,6 +12,7 @@ def test_scraper_to_transformer_pipeline():
     mock_data = [{"FECHA": "20/01/2024 10:00"}]
     mock_hora = MagicMock()
     mock_hora.url = URL_SEC_GET_HORA_SERVER
+    mock_hora.status = 200
     mock_hora.json.return_value = mock_data
     scraper.handle_response(mock_hora)
     
@@ -20,10 +21,12 @@ def test_scraper_to_transformer_pipeline():
         "NOMBRE_COMUNA": "SANTIAGO",
         "NOMBRE_EMPRESA": "ENEL",
         "CLIENTES_AFECTADOS": 100,
-        "FECHA_INT_STR": "18/01/2024"
+        "FECHA_INT_STR": "18/01/2024",
+        "ACTUALIZADO_HACE": "5 min"
     }]
     mock_response = MagicMock()
     mock_response.url = URL_SEC_GET_POR_FECHA
+    mock_response.status = 200
     mock_response.json.return_value = mock_cortes
     scraper.handle_response(mock_response)
     

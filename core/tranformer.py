@@ -15,7 +15,7 @@ class SecDataTransformer():
     """
 
     def __init__(self):
-        """Inicializa el transformador."""
+        """Initializes the transformer."""
         pass
 
     def _normalize_text(self, text: str) -> str:

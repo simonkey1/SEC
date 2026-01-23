@@ -3,30 +3,30 @@ from config import URL_SEC_PRINCIPAL
 
 
 class SECScraper:
-    """Clase encargada de interceptar y capturar datos de la API de la SEC.
+    """Class responsible for intercepting and capturing data from the SEC API.
     
-    Esta clase utiliza Playwright para navegar por la página oficial y actuar como
-    un interceptor de red, capturando las respuestas JSON de los endpoints de 
-    datos y hora del servidor.
+    This class uses Playwright to navigate the official page and act as
+    a network interceptor, capturing JSON responses from the data
+    and server time endpoints.
     
     Attributes:
-        registros (list): Lista de diccionarios con los cortes capturados.
-        hora_server (str): Fecha y hora oficial reportada por el servidor SEC.
+        registros (list): List of dictionaries with captured outages.
+        hora_server (str): Official date and time reported by SEC server.
     """
 
     def __init__(self):
-        """Inicializa el objeto scraper con listas y valores vacíos."""
+        """Initializes the scraper object with empty lists and values."""
         self.registros = []
         self.hora_server = None
 
     def handle_response(self, response: Response):
-        """Manejador de eventos para interceptar respuestas de red.
+        """Event handler to intercept network responses.
         
-        Filtra las URLs de la SEC para extraer datos de cortes (GetPorFecha) 
-        o la hora oficial (GetHoraServer).
+        Filters SEC URLs to extract outage data (GetPorFecha)
+        or official time (GetHoraServer).
 
         Args:
-            response (Response): Objeto de respuesta capturado por Playwright.
+            response (Response): Response object captured by Playwright.
         """
         # Filtramos por URL, independientemente de si es GET o POST
         if "GetPorFecha" in response.url:
@@ -55,13 +55,13 @@ class SECScraper:
                 pass
     
     def run(self) -> dict:
-        """Inicia el proceso de navegación y captura de datos.
+        """Starts the navigation and data capture process.
         
-        Lanza un navegador en modo headless, navega a la página de la SEC,
-        espera las peticiones AJAX y retorna los resultados.
+        Launches a headless browser, navigates to the SEC page,
+        waits for AJAX requests and returns the results.
 
         Returns:
-            dict: Diccionario conteniendo 'data' (registros) y 'hora_server'.
+            dict: Dictionary containing 'data' (records) and 'hora_server'.
         """
         self.registros = [] # Limpiamos el saco
         self.hora_server = None
