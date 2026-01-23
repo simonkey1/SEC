@@ -85,8 +85,8 @@ class SECScraper:
             page.goto(URL_SEC_PRINCIPAL, timeout=60000)
 
             # Esperamos un tiempo prudente para que la página tire sus peticiones AJAX
-            print("⏳ Esperando datos (10s)...")
-            page.wait_for_timeout(10000)
+            print("⏳ Esperando datos (30s)...")
+            page.wait_for_timeout(30000)
 
             browser.close()
 
