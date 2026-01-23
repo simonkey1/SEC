@@ -27,6 +27,13 @@ class SupabaseRepository:
         load_dotenv()
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_KEY")
+        
+        if not url or not key:
+            raise ValueError(
+                f"Missing Supabase credentials. SUPABASE_URL={'set' if url else 'NOT SET'}, "
+                f"SUPABASE_KEY={'set' if key else 'NOT SET'}"
+            )
+        
         self.supabase = create_client(url, key)
     
     def get_or_create_geografia(self, region: str, comuna: str) -> int:
