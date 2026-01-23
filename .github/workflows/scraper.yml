@@ -1,0 +1,62 @@
+name: SEC Scraper
+
+on:
+  # Ejecutar cada 30 minutos
+  schedule:
+    - cron: '*/30 * * * *'
+  
+  # Permitir ejecución manual desde GitHub UI
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Instalar dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget ca-certificates fonts-liberation
+      
+      - name: Instalar dependencias Python
+        run: |
+          pip install --no-cache-dir -r requeriments.txt
+      
+      - name: Instalar Playwright
+        run: |
+          playwright install-deps chromium
+          playwright install chromium
+      
+      - name: Ejecutar scraper
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          EMAIL_NOTIFICATIONS_ENABLED: ${{ secrets.EMAIL_NOTIFICATIONS_ENABLED }}
+        run: |
+          python scripts/end.py &
+          SCRAPER_PID=$!
+          
+          # Esperar 2 minutos (tiempo suficiente para 1 ciclo)
+          sleep 120
+          
+          # Terminar el proceso
+          kill $SCRAPER_PID || true
+          
+          echo "✅ Scraper ejecutado exitosamente"
+      
+      - name: Mostrar logs
+        if: always()
+        run: |
+          echo "Scraper completado"
