@@ -27,6 +27,15 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
+      - name: Debug environment variables
+        run: |
+          echo "SUPABASE_URL length: ${#SUPABASE_URL}"
+          echo "SUPABASE_KEY length: ${#SUPABASE_KEY}"
+          echo "SUPABASE_URL: [${SUPABASE_URL}]"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
       - name: Run tests
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
