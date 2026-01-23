@@ -44,16 +44,14 @@ jobs:
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
           EMAIL_NOTIFICATIONS_ENABLED: ${{ secrets.EMAIL_NOTIFICATIONS_ENABLED }}
         run: |
-          python scripts/end.py &
+          # Ejecutar scraper en background con timeout de 5 minutos
+          timeout 300 python scripts/end.py &
           SCRAPER_PID=$!
           
-          # Esperar 2 minutos (tiempo suficiente para 1 ciclo)
-          sleep 120
+          # Esperar a que termine o timeout
+          wait $SCRAPER_PID || true
           
-          # Terminar el proceso
-          kill $SCRAPER_PID || true
-          
-          echo "✅ Scraper ejecutado exitosamente"
+          echo "✅ Scraper completado"
       
       - name: Mostrar logs
         if: always()
