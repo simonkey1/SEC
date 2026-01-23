@@ -1,0 +1,2 @@
+# Este archivo asegura que la carpeta outputs/ se mantenga en el repositorio
+# Los archivos CSV y PNG generados están en .gitignore

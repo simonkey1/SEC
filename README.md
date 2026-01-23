@@ -1,126 +1,254 @@
 ---
-title: "⚡ Monitoreo en Tiempo Real del Suministro Eléctrico (SEC Chile) ⚡"
-description: "Infraestructura modular para la extracción, procesamiento y visualización geográfica de cortes de luz en Chile."
+title: "⚡ Real-Time Power Outage Monitoring System (SEC Chile) ⚡"
+description: "Production-ready modular infrastructure for extraction, transformation, and monitoring of electrical outages in Chile with automated alerts and data retention policies."
 author: "Simon Gomez"
 ---
 
-## 📌 Visión del Proyecto
+## 📌 Project Overview
 
-Este proyecto ha evolucionado de un simple script de scraping a una **infraestructura modular robusta** diseñada para alimentar un futuro tablero web interactivo. El objetivo es captar la realidad del suministro eléctrico en Chile, superando las limitaciones de visualización de la plataforma oficial de la SEC.
+A production-grade data engineering pipeline that evolved from a simple scraping script to a **robust, enterprise-level monitoring system**. This project demonstrates professional software engineering practices including automated testing, database management, email notifications, and resilience patterns.
 
-### 🚀 Objetivos Actuales
+### 🎯 Key Features
 
-1.  **Extracción de Alta Fidelidad**: Intercepción de APIs internas (`GetPorFecha`) en lugar de parsing de HTML cambiante.
-2.  **Ingeniería de Datos**: Sincronización con el reloj del servidor (`GetHoraServer`) y agregación inteligente de datos fragmentados (Efecto Puerto Montt).
-3.  **Arquitectura Modular**: Código desacoplado siguiendo principios de diseño OOP para escalabilidad.
-4.  **Visualización Web**: (En desarrollo) Transición de PowerBI a una aplicación web personalizada con mapas GIS.
-
----
-
-## 🏗️ Arquitectura del Sistema
-
-El proyecto se divide en módulos especializados dentro de la carpeta `core/`:
-
-### 1. [core/scraper.py](core/scraper.py) (Extracción)
-
-Utiliza **Playwright** para actuar como un "man-in-the-middle".
-
-- Intercepta la respuesta JSON de `GetPorFecha` que alimenta los mapas oficiales.
-- Captura la hora oficial del servidor mediante `GetHoraServer` para garantizar que los cálculos de antigüedad sean exactos, independientemente de la zona horaria del cliente.
-
-### 2. [core/tranformer.py](core/tranformer.py) (Lógica y Limpieza)
-
-El corazón del procesamiento de datos.
-
-- **Agregación**: Resuelve el problema de datos fragmentados donde una misma comuna/empresa aparece en múltiples filas (ej. Puerto Montt). Realiza un `groupby` y suma los afectados.
-- **Métricas de Antigüedad**: Calcula `DIAS_ANTIGUEDAD` comparando la fecha de inicio del corte con la hora oficial del servidor capturada.
-- **ID Único Sensible**: Genera una llave compuesta (`ID_UNICO`) que incluye la magnitud de afectados, permitiendo detectar cambios en la severidad del corte en tiempo real.
-
-### 3. [core/database.py](core/database.py) (Persistencia)
-
-Gestiona la escritura en `outputs/`.
-
-- Mantiene un **Histórico** (`clientes_afectados_historico.csv`) sin duplicados.
-- Genera un snapshot de **Tiempo Real** (`clientes_afectados_tiempo_real.csv`) para consumo inmediato de visualizadores.
-- Implementa codificación `utf-8-sig` para compatibilidad nativa con Excel y PowerBI.
+1. **High-Fidelity Data Extraction**: API interception (`GetPorFecha`) using Playwright instead of brittle HTML parsing
+2. **Smart Data Engineering**: Server time synchronization (`GetHoraServer`) and intelligent aggregation of fragmented data
+3. **Production Architecture**: 
+   - Circuit Breaker pattern for resilience
+   - Automated email alerts (capacity, errors, data quality)
+   - 30-day data retention with automated cleanup
+   - Health monitoring with threshold-based alerts
+4. **Professional Testing**: 22 comprehensive tests (unit + integration) with 100% pass rate
+5. **Cloud Database**: Supabase (PostgreSQL) with Star Schema design for analytics
 
 ---
 
-## 🚀 Instalación y Uso
+## 🏗️ System Architecture
 
-### Preparar el entorno
+### Core Modules
 
+#### 1. [core/scraper.py](core/scraper.py) - Data Extraction
+**Playwright-based network interceptor** acting as a man-in-the-middle:
+- Intercepts JSON responses from `GetPorFecha` API (official SEC data source)
+- Captures server time via `GetHoraServer` for accurate timestamp synchronization
+- Headless browser automation with proper User-Agent handling
+
+#### 2. [core/tranformer.py](core/tranformer.py) - ETL Pipeline
+**Heart of data processing**:
+- **Aggregation**: Solves fragmented data problem (multiple rows per location → single record)
+- **Metrics**: Calculates `DIAS_ANTIGUEDAD` (outage age in days)
+- **Unique IDs**: Generates composite hash keys including affected clients count for change detection
+
+#### 3. [core/database.py](core/database.py) - Data Persistence & Monitoring
+**Dual storage strategy**:
+- CSV exports (`outputs/`) for historical records and real-time snapshots
+- **Supabase integration** with capacity monitoring:
+  - `check_database_capacity()`: Monitors DB size vs 500MB limit
+  - Triggers email alerts at 85% threshold
+  - Returns metrics: `size_mb`, `porcentaje`, `total_filas`, `alert_sent`
+
+#### 4. [core/notifications.py](core/notifications.py) - Alert System
+**EmailNotifier class** with Gmail SMTP:
+- Capacity alerts (database size warnings)
+- Scraper error notifications
+- Circuit breaker state changes
+- Configurable enable/disable via `.env`
+
+#### 5. [core/circuitbreaker.py](core/circuitbreaker.py) - Resilience Pattern
+**Fault tolerance mechanism**:
+- Automatic failure detection (3 failures → OPEN state)
+- 600-second cooldown before retry
+- Half-open testing for recovery
+
+#### 6. [scripts/cleanup_old_data.py](scripts/cleanup_old_data.py) - Data Retention
+**Automated maintenance**:
+- Deletes records older than 30 days from Supabase
+- Runs every 7 days (2016 cycles × 5 min)
+- Prevents database overflow on free tier
+
+#### 7. [helper/check_variacion_historica.py](helper/check_variacion_historica.py) - Real-time Monitoring
+Compares consecutive snapshots to detect significant changes in affected clients
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
 ```bash
-# Crear entorno virtual
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Linux/Mac
 
-# Instalar dependencias
-pip install playwright pandas
+# Install dependencies
+pip install -r requeriments.txt
 playwright install chromium
 ```
 
-### Ejecución
+### Environment Configuration
+Create a `.env` file with:
+```env
+# Supabase credentials
+SUPABASE_URL=your_project_url
+SUPABASE_KEY=your_publishable_key
 
-El script principal que orquesta el flujo es:
+# Gmail for alerts (use app password, not regular password)
+GMAIL_USER=your_email@gmail.com
+GMAIL_APP_PASSWORD=your_16_char_app_password
+ALERT_EMAIL=recipient@gmail.com
+EMAIL_NOTIFICATIONS_ENABLED=true
+```
 
+### Database Setup
+Execute the Star Schema DDL in Supabase:
+```bash
+# Run db/schema.sql in your Supabase SQL Editor
+# Creates: dim_geografia, dim_empresa, dim_tiempo, fact_interrupciones
+```
+
+## 🎯 Usage
+
+### Main Orchestrator
 ```bash
 python scripts/end.py
 ```
 
+**What it does:**
+1. **Infinite Loop**: Runs every 5 minutes (configurable)
+2. **Circuit Breaker Protection**: Fails gracefully after 3 consecutive errors
+3. **Data Pipeline**: Scrape → Transform → Save to CSV & Supabase
+4. **Automated Maintenance**:
+   - Health check every 24 hours (288 cycles)
+   - Cleanup every 7 days (2016 cycles)
+   - Email alerts when database reaches 85% capacity
+
+### Running Tests
+```bash
+# Run all tests (22 tests, 100% pass rate)
+pytest tests/ -v
+
+# Run specific test suites
+pytest tests/unit/ -v          # Unit tests only
+pytest tests/integration/ -v   # Integration tests only
+```
+
 ---
 
-## 🔍 Análisis Técnico: El "Efecto Puerto Montt"
+## 🧪 Testing Strategy
 
-Durante la ingeniería inversa, detectamos que la SEC reporta cortes en "pedazos" técnicos. Por ejemplo, Puerto Montt podía tener 10 filas de 1 cliente cada una. Nuestra lógica de **Transformación** consolida estos datos para mostrar el impacto real por comuna, sumando los afectados en una única entrada representativa.
+### Test Coverage (22 tests - 100% passing)
+
+**Unit Tests** (`tests/unit/`):
+- `test_circuit_breaker.py`: 6 tests - State transitions, failure tolerance, recovery
+- `test_scraper.py`: 6 tests - Response handling, time parsing, data validation
+- `test_transformer_new.py`: 4 tests - Aggregation logic, antiquity calculation, Puerto Montt case
+
+**Integration Tests** (`tests/integration/`):
+- `test_cleanup_integration.py`: Verifies 30-day retention policy with real Supabase data
+- `test_health_check_integration.py`: Validates monitoring metrics and alert triggering
+- `test_notifications_integration.py`: Real email delivery + flag respect verification
+- `test_scraper_to_transformer_pipeline.py`: End-to-end data flow validation
+
+**Key Testing Decisions**:
+- Real database operations (no mocks) for integration tests to prove production readiness
+- Pytest fixtures for reusable test components
+- Comprehensive assertions on data structure, types, and business logic
+
+## 🔍 Technical Deep-Dive: The "Puerto Montt Effect"
+
+During reverse engineering, we discovered SEC reports outages in technical fragments. Example: Puerto Montt might have 10 rows of 1 client each (one per electrical sector).
+
+**Our Solution**: 
+```python
+df.groupby(['REGION', 'COMUNA', 'EMPRESA', 'FECHA']).agg({
+    'CLIENTES_AFECTADOS': 'sum'
+}).reset_index()
+```
+This consolidates fragmented data to show real impact per location.
 
 ---
 
-## 📊 Visualización Geographic & Legacy
+## 📊 Visualización Geographic & GIS
+
+### 🗺️ Procesamiento de Mapas
+
+Contamos con una infraestructura de mapas basada en archivos GeoJSON y Shapefiles (ESRI) organizada por jerarquía territorial:
+- **Nivel Nacional**: `maps/poligonos_chile/`
+- **Nivel Regional/Provincial/Comunal**: Polígonos detallados con codificación oficial.
+
+Además, el script `scripts/mapas.py` permite **regionalizar** el GeoJSON nacional, subdividiéndolo en archivos independientes por cada región de Chile para optimizar la carga en visores web ligeros.
 
 ### 🌐 Próximos Pasos: El Dashboard Web
 
-El enfoque se ha desplazado hacia una plataforma web propia que utilice los archivos generados y los polígonos GeoJSON en `maps/` para crear una experiencia de usuario superior (GIS).
+El enfoque se ha desplazado hacia una plataforma web propia que utilice los archivos generados y los polígonos GeoJSON en `maps/` para crear una experiencia de usuario superior (GIS) con capas de calor y tendencias temporales.
 
 ### 📈 Legacy: Análisis en PowerBI
 
-Aún puedes utilizar los CSVs generados para alimentar tableros de PowerBI.
+Si prefieres utilizar herramientas No-Code, los archivos generados siguen siendo compatibles con PowerBI. Hemos movido la guía técnica detallada y los fragmentos de código M/DAX a su propio documento:
 
-<details>
-<summary>Instrucciones para PowerBI (Click para expandir)</summary>
-
-Para poder manipular nuestros datos en PowerBI hay que seguir estos sencillos pasos:
-
-1. **Importar CSV**: Obtener datos -> Texto/CSV -> `outputs/clientes_afectados_tiempo_real.csv`.
-2. **Transformación**: Se recomienda normalizar los nombres de las regiones para que coincidan con los mapas de PowerBI.
-
-#### Código M Sugerido
-
-```m
-let
-    Source = Csv.Document(File.Contents("C:\Ruta\Al\Archivo\clientes_afectados_tiempo_real.csv"),[Delimiter=",", Columns=9, Encoding=65001, QuoteStyle=QuoteStyle.None]),
-    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
-    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"ID_UNICO", type text}, {"TIMESTAMP", type datetime}, {"CLIENTES_AFECTADOS", Int64.Type}}),
-    #"Added Custom" = Table.AddColumn(#"Changed Type", "REGION_CORREGIDA", each "Región de " & [REGION])
-in
-    #"Added Custom"
-```
-
-_Nota: Puedes encontrar tutoriales detallados sobre la creación de medidas DAX para "Última Actualización" y "Top Comunas" en el historial de este repo._
-
-</details>
+👉 **[Guía de Configuración para PowerBI](docs/powerbi_legacy.md)**
 
 ---
 
-## 🛠️ Automatización
+## � Database Schema (Star Schema)
 
-Puedes automatizar la ejecución mediante el Programador de Tareas (Windows) o Crontab (Linux) ejecutando el script `scripts/end.py`.
+```sql
+-- Dimension Tables
+dim_geografia (id_geografia, nombre_comuna, nombre_region, nombre_provincia, codigo_comuna)
+dim_empresa (id_empresa, nombre_empresa, rut_empresa)
+dim_tiempo (id_tiempo, fecha, hora, año, mes, dia)
 
+-- Fact Table
+fact_interrupciones (
+    id_fact, 
+    id_tiempo, 
+    id_geografia, 
+    id_empresa,
+    clientes_afectados,
+    hash_id UNIQUE,
+    created_at TIMESTAMPTZ
+)
+```
+
+**Design Decisions**:
+- Star Schema for optimal query performance
+- `hash_id` prevents duplicate insertions
+- `created_at` enables 30-day retention policy
+- Indices on FK columns + created_at for fast filtering
+
+## 🛠️ Production Deployment
+
+### Automation Options
+**Windows Task Scheduler**:
+```bat
+@echo off
+cd C:\path\to\luz
+call .venv\Scripts\activate
+python scripts\end.py
+```
+
+**Linux Crontab**:
 ```bash
-# Ejemplo simple de .bat para Windows (@echo off etc...)
-python scripts/end.py
+*/5 * * * * cd /path/to/luz && source .venv/bin/activate && python scripts/end.py
 ```
+
+### Monitoring Checklist
+- ✅ Email alerts configured and tested
+- ✅ Database retention policy active (30 days)
+- ✅ Circuit breaker protects against API downtime
+- ✅ Health checks run every 24 hours
+- ✅ All 22 tests passing before deployment
+
+## 🎓 Skills Demonstrated
+
+This project showcases production-ready data engineering practices:
+
+- **ETL Pipeline Design**: Scraping → Transformation → Loading with error handling
+- **Database Management**: Star Schema, retention policies, capacity monitoring
+- **Resilience Patterns**: Circuit Breaker for fault tolerance
+- **Testing**: 100% test coverage with unit + integration strategies
+- **DevOps**: Email notifications, automated cleanup, health monitoring
+- **Code Quality**: Modular architecture, comprehensive documentation, English codebase
 
 ---
 
-_Gracias por seguir el desarrollo de este proyecto. El monitoreo transparente de servicios básicos es un pilar para la resiliencia ciudadana._ 💜
+**Built for portfolio demonstration - Contact for collaboration opportunities** 💼

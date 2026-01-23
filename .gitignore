@@ -52,6 +52,11 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Archivos de mapas pesados (shapefiles)
+maps/**/*.shp
+maps/**/*.dbf
+maps/**/*.shx
+
 # Flask stuff:
 instance/
 .webassets-cache
@@ -141,6 +146,13 @@ cython_debug/
 
 # VS Code specific
 .vscode/
+
+# Project Specific: Ignore heavy shapefiles (use TopoJSON/GeoJSON for web)
+*.shp
+*.dbf
+*.shx
+*.prj
+*.cpg
 
 # Project Specific: Ignore generated data if desired
 outputs/*.csv
