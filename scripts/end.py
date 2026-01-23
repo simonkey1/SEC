@@ -5,20 +5,22 @@ infinite loop that captures SEC data every 5 minutes, processes it and saves
 it to local storage.
 """
 
-import time
-import sys
 import os
+import sys
+import time
 from datetime import datetime
 
 # Añadir el directorio raíz al path para importaciones modulares
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import logging
+
 from cleanup_old_data import cleanup_old_records
-from core.database import check_database_capacity, SupabaseRepository
+
+from core.circuitbreaker import CircuitBreaker
+from core.database import SupabaseRepository, check_database_capacity
 from core.scraper import SECScraper
 from core.tranformer import SecDataTransformer
-from core.circuitbreaker import CircuitBreaker
-import logging
 
 logger = logging.getLogger(__name__)
 

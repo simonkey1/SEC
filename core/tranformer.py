@@ -1,15 +1,16 @@
-
+import hashlib
 import unicodedata
 from datetime import datetime
+
 import pandas as pd
-import hashlib
+
 from core.logger import logger
 
 
-class SecDataTransformer():
+class SecDataTransformer:
     """Clase para la transformación y normalización de datos de cortes eléctricos.
-    
-    Esta clase implementa la lógica de agregación (resolviendo la duplicidad de 
+
+    Esta clase implementa la lógica de agregación (resolviendo la duplicidad de
     datos fragmentados), limpieza de strings, cálculo de antigüedad de los cortes
     y generación de IDs únicos sensibles a la severidad.
     """
@@ -20,17 +21,17 @@ class SecDataTransformer():
 
     def _normalize_text(self, text: str) -> str:
         """Normaliza texto: mayúsculas, sin acentos, sin espacios extra.
-        
+
         Args:
             text (str): Texto a normalizar
-            
+
         Returns:
             str: Texto normalizado
         """
         # Quitar acentos
-        text_nfd = unicodedata.normalize('NFD', text)
-        text_ascii = text_nfd.encode('ASCII', 'ignore').decode('ASCII')
-        
+        text_nfd = unicodedata.normalize("NFD", text)
+        text_ascii = text_nfd.encode("ASCII", "ignore").decode("ASCII")
+
         # Mayúsculas y quitar espacios extra
         return text_ascii.upper().strip()
 
@@ -43,8 +44,10 @@ class SecDataTransformer():
             logger.info(f"Hora SEC detectada: {dt}")
         except (ValueError, TypeError, IndexError, AttributeError):
             dt = datetime.now()
-            logger.warning(f"No se detectó hora SEC. Usando local: {dt.strftime('%H:%M')}")
-            
+            logger.warning(
+                f"No se detectó hora SEC. Usando local: {dt.strftime('%H:%M')}"
+            )
+
         return dt.strftime("%Y-%m-%d %H:%M:%S"), dt.date()
 
     def _create_robust_id(self, comuna: str, empresa: str, timestamp: str) -> str:
@@ -54,7 +57,7 @@ class SecDataTransformer():
 
     def transform(self, raw_data: list, server_time_raw: any = None) -> list:
         """Procesa los datos crudos capturados para su almacenamiento.
-        
+
         Aplica agrupaciones por región, comuna y empresa, suma los afectados
         y calcula la antigüedad del corte en días respecto a la hora del servidor.
 
@@ -75,15 +78,13 @@ class SecDataTransformer():
         df = pd.DataFrame(raw_data)
 
         # Agrupar y sumar (Resuelve fragmentación de datos)
-        df_grouped = df.groupby([
-            "NOMBRE_REGION", 
-            "NOMBRE_COMUNA", 
-            "NOMBRE_EMPRESA", 
-            "FECHA_INT_STR"
-        ]).agg({
-            "CLIENTES_AFECTADOS": "sum",
-            "ACTUALIZADO_HACE": "first"
-        }).reset_index()
+        df_grouped = (
+            df.groupby(
+                ["NOMBRE_REGION", "NOMBRE_COMUNA", "NOMBRE_EMPRESA", "FECHA_INT_STR"]
+            )
+            .agg({"CLIENTES_AFECTADOS": "sum", "ACTUALIZADO_HACE": "first"})
+            .reset_index()
+        )
 
         print(df_grouped)
 
@@ -93,7 +94,7 @@ class SecDataTransformer():
             region = self._normalize_text(str(row["NOMBRE_REGION"]))
             comuna = self._normalize_text(str(row["NOMBRE_COMUNA"]))
             empresa = self._normalize_text(str(row["NOMBRE_EMPRESA"]))
-            
+
             # FECHA_INT_STR ya viene como string de la SEC (ej: 19/01/2026)
             fecha_str = str(row["FECHA_INT_STR"]).strip()
             afectados = int(row["CLIENTES_AFECTADOS"])
@@ -108,17 +109,18 @@ class SecDataTransformer():
             # ID robusto: Incluye afectados para detectar cambios en tiempo real
             corte_id = self._create_robust_id(comuna, empresa, timestamp_actual)
 
-            registros_procesados.append({
-                "ID_UNICO": corte_id,
-                "TIMESTAMP": timestamp_actual,
-                "FECHA": fecha_str,
-                "REGION": region,
-                "COMUNA": comuna,
-                "EMPRESA": empresa,
-                "CLIENTES_AFECTADOS": afectados,
-                "DIAS_ANTIGUEDAD": dias_antiguedad,
-                "ACTUALIZADO_HACE": str(row["ACTUALIZADO_HACE"]).strip()
-            })
-        
+            registros_procesados.append(
+                {
+                    "ID_UNICO": corte_id,
+                    "TIMESTAMP": timestamp_actual,
+                    "FECHA": fecha_str,
+                    "REGION": region,
+                    "COMUNA": comuna,
+                    "EMPRESA": empresa,
+                    "CLIENTES_AFECTADOS": afectados,
+                    "DIAS_ANTIGUEDAD": dias_antiguedad,
+                    "ACTUALIZADO_HACE": str(row["ACTUALIZADO_HACE"]).strip(),
+                }
+            )
+
         return registros_procesados
-    

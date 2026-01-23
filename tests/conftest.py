@@ -14,7 +14,6 @@ def complete_sec_record():
         "CLIENTES_AFECTADOS": 100,
         "ACTUALIZADO_HACE": "2 Dias 0 Horas 0 Minutos",
         "FECHA_INT_STR": "18/01/2024",
-        
         # Campos legacy (siempre en 0 según estructura real de la SEC)
         "HORA": 0,
         "DIA": 0,

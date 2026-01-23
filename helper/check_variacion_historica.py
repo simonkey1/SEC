@@ -1,5 +1,7 @@
-import pandas as pd
 import os
+
+import pandas as pd
+
 from core.database import csv_historico, csv_tiempo_real
 
 
@@ -18,7 +20,9 @@ def check_variacion_historico():
         return
 
     # Obtenemos la lista de TIMESTAMP distintos y la ordenamos
-    timestamps_unicos = df_hist["TIMESTAMP"].drop_duplicates().sort_values(ascending=True)
+    timestamps_unicos = (
+        df_hist["TIMESTAMP"].drop_duplicates().sort_values(ascending=True)
+    )
     if len(timestamps_unicos) < 2:
         print("Solo hay un snapshot único, no hay penúltimo para comparar.")
         return
@@ -29,13 +33,21 @@ def check_variacion_historico():
     penultimo_tiempo = timestamps_unicos.iloc[-2]
 
     # Sumar los CLIENTES_AFECTADOS en cada snapshot
-    afectados_ultimo = df_hist.loc[df_hist["TIMESTAMP"] == ultimo_tiempo, "CLIENTES_AFECTADOS"].sum()
-    afectados_penultimo = df_hist.loc[df_hist["TIMESTAMP"] == penultimo_tiempo, "CLIENTES_AFECTADOS"].sum()
+    afectados_ultimo = df_hist.loc[
+        df_hist["TIMESTAMP"] == ultimo_tiempo, "CLIENTES_AFECTADOS"
+    ].sum()
+    afectados_penultimo = df_hist.loc[
+        df_hist["TIMESTAMP"] == penultimo_tiempo, "CLIENTES_AFECTADOS"
+    ].sum()
 
     variacion = afectados_ultimo - afectados_penultimo
 
     print(f"🔎 Health Check:")
     print(f"    Último snapshot: {ultimo_tiempo} → {afectados_ultimo} afectados")
-    print(f"    Penúltimo snapshot: {penultimo_tiempo} → {afectados_penultimo} afectados")
+    print(
+        f"    Penúltimo snapshot: {penultimo_tiempo} → {afectados_penultimo} afectados"
+    )
     print(f"    Variación (DAX-like): {variacion}\n")
-    print(f"✅ Datos guardados en:\n📌 {csv_historico} (Histórico)\n📌 {csv_tiempo_real} (Tiempo Real)")
+    print(
+        f"✅ Datos guardados en:\n📌 {csv_historico} (Histórico)\n📌 {csv_tiempo_real} (Tiempo Real)"
+    )

@@ -1,2 +1,1 @@
-"""Scripts de ejecución y utilidades para el sistema de monitoreo.
-"""
+"""Scripts de ejecución y utilidades para el sistema de monitoreo."""
