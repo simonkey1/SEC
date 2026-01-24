@@ -1,4 +1,6 @@
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
+import random
 from datetime import datetime
 
 from config import URL_SEC_PRINCIPAL
@@ -30,20 +32,43 @@ class SECScraperAlternative:
         print("🚀 Iniciando navegador...")
 
         with sync_playwright() as p:
-            # Usar un User-Agent real para evitar bloqueos
-            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            # Lista de User-Agents para rotar
+            user_agents = [
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            ]
+            ua = random.choice(user_agents)
+            
             browser = p.chromium.launch(headless=True)
-            context = browser.new_context(user_agent=user_agent)
+            context = browser.new_context(
+                user_agent=ua,
+                viewport={'width': 1920, 'height': 1080}
+            )
             page = context.new_page()
 
-            print("🔗 Navegando a la SEC (iframe directo)...")
-            # Navegar directamente al iframe que contiene la aplicación
-            page.goto("https://apps.sec.cl/INTONLINEv1/index.aspx", timeout=60000)
+            # Aplicar stealth
+            stealth_sync(page)
 
-            # Esperar a que la página esté completamente cargada
-            print("⏳ Esperando carga completa...")
-            page.wait_for_load_state("networkidle")
-            page.wait_for_timeout(5000)  # Esperar 5s adicionales
+            print(f"🔗 Navegando a la SEC (iframe directo) con UA: {ua[:50]}...")
+            
+            try:
+                # Intentar cargar la página con un timeout generoso pero tolerante a cargas parciales
+                response = page.goto("https://apps.sec.cl/INTONLINEv1/index.aspx", 
+                                   wait_until="domcontentloaded", 
+                                   timeout=90000)
+                
+                if response:
+                    print(f"📡 Respuesta recibida: {response.status}")
+                
+                # Esperar un poco a que se asiente la sesión
+                print("⏳ Esperando que la sesión se estabilice...")
+                page.wait_for_timeout(10000)
+                
+            except Exception as e:
+                print(f"⚠️ Advertencia en navegación inicial: {str(e)}")
+                # Si falló por timeout pero tenemos la página abierta, intentamos seguir
+                pass
 
             print("📡 Ejecutando fetch directo a la API...")
             
