@@ -1,4 +1,4 @@
-URL_SEC_GET_POR_FECHA = "https://apps.sec.cl/INTONLINEv1/index.aspx/GetPorFecha"
+URL_SEC_GET_POR_FECHA = "https://apps.sec.cl/INTONLINEv1/ClientesAfectados/GetPorFecha"
 URL_SEC_GET_HORA_SERVER = (
     "https://apps.sec.cl/INTONLINEv1/ClientesAfectados/GetHoraServer"
 )

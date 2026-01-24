@@ -1,4 +1,4 @@
-from playwright.sync_api import Response, sync_playwright
+﻿from playwright.sync_api import Response, sync_playwright
 
 from config import URL_SEC_PRINCIPAL
 
@@ -39,13 +39,13 @@ class SECScraper:
                     if isinstance(data, list) and len(data) > 0:
                         self.registros.extend(data)
                         print(
-                            f"✅ ¡Datos capturados exitosamente! ({len(data)} registros via {method})"
+                            f"Ô£à ┬íDatos capturados exitosamente! ({len(data)} registros via {method})"
                         )
                 else:
-                    # Si el status no es 200, algo falló en esa petición
+                    # Si el status no es 200, algo fall├│ en esa petici├│n
                     if method == "POST":
                         print(
-                            f"⚠️ El POST a GetPorFecha devolvió status {response.status}"
+                            f"ÔÜá´©Å El POST a GetPorFecha devolvi├│ status {response.status}"
                         )
             except Exception:
                 # Silenciamos errores de parsing si la respuesta no era JSON
@@ -70,67 +70,27 @@ class SECScraper:
         """
         self.registros = []  # Limpiamos el saco
         self.hora_server = None
-        print("🚀 Iniciando navegador...")
+        print("­ƒÜÇ Iniciando navegador...")
 
         with sync_playwright() as p:
             # Usar un User-Agent real para evitar bloqueos
             user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
-                    '--no-sandbox'
-                ]
-            )
-            
-            # Configuración stealth para parecer navegador real
-            context = browser.new_context(
-                user_agent=user_agent,
-                viewport={'width': 1920, 'height': 1080},
-                locale='es-CL',
-                timezone_id='America/Santiago',
-                permissions=['geolocation'],
-                geolocation={'latitude': -33.4489, 'longitude': -70.6693},  # Santiago, Chile
-                color_scheme='light',
-                extra_http_headers={
-                    'Accept-Language': 'es-CL,es;q=0.9,en;q=0.8',
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1'
-                }
-            )
-            
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(user_agent=user_agent)
             page = context.new_page()
-            
-            # Ocultar que es un bot
-            page.add_init_script("""
-                Object.defineProperty(navigator, 'webdriver', {
-                    get: () => undefined
-                });
-                
-                Object.defineProperty(navigator, 'plugins', {
-                    get: () => [1, 2, 3, 4, 5]
-                });
-                
-                Object.defineProperty(navigator, 'languages', {
-                    get: () => ['es-CL', 'es', 'en']
-                });
-            """)
 
             page.on("response", self.handle_response)
 
-            print("🔗 Navegando a la SEC...")
+            print("­ƒöù Navegando a la SEC...")
             page.goto(URL_SEC_PRINCIPAL, timeout=60000)
 
-            # Esperamos un tiempo prudente para que la página tire sus peticiones AJAX
-            print("⏳ Esperando datos (30s)...")
+            # Esperamos un tiempo prudente para que la p├ígina tire sus peticiones AJAX
+            print("ÔÅ│ Esperando datos (30s)...")
             page.wait_for_timeout(30000)
 
             browser.close()
 
         if not self.registros:
-            print("❌ No se encontró la petición 'GetPorFecha' en esta vuelta.")
+            print("ÔØî No se encontr├│ la petici├│n 'GetPorFecha' en esta vuelta.")
 
         return {"data": self.registros, "hora_server": self.hora_server}
