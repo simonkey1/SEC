@@ -19,7 +19,7 @@ from cleanup_old_data import cleanup_old_records
 
 from core.circuitbreaker import CircuitBreaker
 from core.database import SupabaseRepository, check_database_capacity
-from core.scraper import SECScraper  # Volver a Playwright para GitHub Actions
+from core.scraper_alternative import SECScraperAlternative  # Usar scraper con fetch directo
 from core.tranformer import SecDataTransformer
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def main():
     breaker = CircuitBreaker(3, 600)
     repo = SupabaseRepository()
 
-    bot = SECScraper()  # Volver a Playwright
+    bot = SECScraperAlternative()  # Usar scraper con fetch directo
     transformer = SecDataTransformer()
 
     ciclo_contador = 0
