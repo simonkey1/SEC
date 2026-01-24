@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
 import random
+import time
 from datetime import datetime
 
 from config import URL_SEC_PRINCIPAL
@@ -32,42 +32,53 @@ class SECScraperAlternative:
         print("🚀 Iniciando navegador...")
 
         with sync_playwright() as p:
-            # Lista de User-Agents para rotar
+            # Lista de User-Agents recientes para rotar
             user_agents = [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0"
             ]
             ua = random.choice(user_agents)
             
             browser = p.chromium.launch(headless=True)
+            # Simular un dispositivo real
             context = browser.new_context(
                 user_agent=ua,
-                viewport={'width': 1920, 'height': 1080}
+                viewport={'width': 1920, 'height': 1080},
+                locale="es-CL",
+                timezone_id="America/Santiago"
             )
             page = context.new_page()
 
-            # Aplicar stealth
-            stealth_sync(page)
+            # Añadir headers extras para parecer más humano
+            page.set_extra_http_headers({
+                "Accept-Language": "es-CL,es;q=0.9,en;q=0.8",
+                "Referer": "https://www.sec.cl/",
+                "sec-ch-ua-platform": '"Windows"',
+                "sec-ch-ua": '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"'
+            })
 
-            print(f"🔗 Navegando a la SEC (iframe directo) con UA: {ua[:50]}...")
+            print(f"🔗 Navegando a la SEC con UA: {ua[:40]}...")
             
             try:
-                # Intentar cargar la página con un timeout generoso pero tolerante a cargas parciales
-                response = page.goto("https://apps.sec.cl/INTONLINEv1/index.aspx", 
-                                   wait_until="domcontentloaded", 
-                                   timeout=90000)
+                # Primero ir a la home de SEC para establecer contexto/cookies generales
+                page.goto("https://www.sec.cl/", wait_until="domcontentloaded", timeout=60000)
+                time.sleep(2)
                 
-                if response:
-                    print(f"📡 Respuesta recibida: {response.status}")
+                # Luego ir a la aplicación de interrupciones
+                print("🔗 Accediendo a la aplicación de interrupciones...")
+                page.goto("https://apps.sec.cl/INTONLINEv1/index.aspx", 
+                         wait_until="commit", # Capturar apenas empiece a cargar
+                         timeout=90000)
                 
-                # Esperar un poco a que se asiente la sesión
-                print("⏳ Esperando que la sesión se estabilice...")
-                page.wait_for_timeout(10000)
+                # Esperar un poco a que se asiente la sesión y JS cargue
+                print("⏳ Esperando estabilización de sesión (15s)...")
+                time.sleep(15)
                 
             except Exception as e:
-                print(f"⚠️ Advertencia en navegación inicial: {str(e)}")
-                # Si falló por timeout pero tenemos la página abierta, intentamos seguir
+                print(f"⚠️ Nota en navegación: {str(e)}")
+                # Si falló por timeout pero la página ya "comiteó", intentamos seguir
                 pass
 
             print("📡 Ejecutando fetch directo a la API...")
