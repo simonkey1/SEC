@@ -45,6 +45,9 @@ jobs:
           EMAIL_NOTIFICATIONS_ENABLED: ${{ secrets.EMAIL_NOTIFICATIONS_ENABLED }}
           PYTHONUNBUFFERED: 1
         run: |
+          echo "🔍 Ejecutando diagnóstico de conectividad..."
+          python scripts/diagnostic.py
+          
           echo "🚀 Iniciando scraper..."
           
           # Ejecutar con output completo
