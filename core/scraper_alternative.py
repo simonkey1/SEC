@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright
 import random
 import time
+import pytz
 from datetime import datetime
 
 from config import URL_SEC_PRINCIPAL
@@ -83,8 +84,9 @@ class SECScraperAlternative:
 
             print("📡 Ejecutando fetch directo a la API...")
             
-            # Obtener fecha y hora actual
-            now = datetime.now()
+            # Obtener fecha y hora actual en zona Chile
+            chile_tz = pytz.timezone("America/Santiago")
+            now = datetime.now(chile_tz)
             
             # Ejecutar fetch directo desde el navegador
             result = page.evaluate("""
