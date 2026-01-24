@@ -68,7 +68,9 @@ def main():
 
             except Exception as e:
                 breaker.registrar_fallo()
-                logger.warning(f"Falla {e}")
+                logger.error(f"❌ Error en scraper: {e}")
+                import traceback
+                logger.error(f"Traceback: {traceback.format_exc()}")
         else:
             logger.info("Circuito abierto...")
 

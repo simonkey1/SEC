@@ -43,15 +43,23 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
           EMAIL_NOTIFICATIONS_ENABLED: ${{ secrets.EMAIL_NOTIFICATIONS_ENABLED }}
+          PYTHONUNBUFFERED: 1
         run: |
-          # Ejecutar scraper en background con timeout de 5 minutos
-          timeout 300 python scripts/end.py &
+          echo "🚀 Iniciando scraper..."
+          
+          # Ejecutar con output completo
+          python -u scripts/end.py 2>&1 | tee scraper.log &
           SCRAPER_PID=$!
           
-          # Esperar a que termine o timeout
-          wait $SCRAPER_PID || true
+          # Esperar hasta 5 minutos
+          timeout 300 tail -f scraper.log || true
+          
+          # Terminar proceso si sigue corriendo
+          kill $SCRAPER_PID 2>/dev/null || true
           
           echo "✅ Scraper completado"
+          echo "📋 Últimas líneas del log:"
+          tail -20 scraper.log || true
       
       - name: Mostrar logs
         if: always()
