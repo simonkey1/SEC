@@ -1,4 +1,8 @@
 import pytest
+from dotenv import load_dotenv
+
+# Cargar variables de entorno para todos los tests
+load_dotenv()
 
 
 @pytest.fixture

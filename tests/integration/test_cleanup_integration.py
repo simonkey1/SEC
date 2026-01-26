@@ -6,7 +6,7 @@ import pytest
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-from scripts.cleanup_old_data import cleanup_old_records
+from scripts.legacy.cleanup_old_data import cleanup_old_records
 
 
 def test_cleanup_deletes_only_old_records():

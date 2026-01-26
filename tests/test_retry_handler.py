@@ -9,6 +9,7 @@ Este script prueba:
 
 import logging
 import sys
+import pytest
 from pathlib import Path
 
 # Agregar el directorio raíz al path
@@ -50,64 +51,30 @@ def test_function_success_after_3_attempts():
 @retry_with_backoff(
     max_attempts=3, base_delay=1.0, strategy="exponential", logger=logger
 )
-def test_function_always_fails():
-    """Función que siempre falla para probar max_attempts."""
+def always_fails_func():
+    """Función auxiliar que siempre falla."""
     raise Exception("Esta función siempre falla")
 
 
-def run_tests():
-    """Ejecuta todos los tests."""
+def test_retry_logic_success():
+    """Verifica que el retry tenga éxito eventualmente."""
     global attempt_counter
-
-    print("\n" + "=" * 60)
-    print("TEST 1: Función que tiene éxito después de 2 fallos")
-    print("=" * 60)
-
     attempt_counter = 0
-    try:
-        result = test_function_success_after_3_attempts()
-        print(f"\n✅ Test 1 PASÓ: {result}")
-    except Exception as e:
-        print(f"\n❌ Test 1 FALLÓ: {e}")
+    result = test_function_success_after_3_attempts()
+    assert "¡Éxito" in result
 
-    print("\n" + "=" * 60)
-    print("TEST 2: Función que siempre falla (debe agotar reintentos)")
-    print("=" * 60)
 
-    try:
-        result = test_function_always_fails()
-        print(f"\n❌ Test 2 FALLÓ: No debería haber tenido éxito")
-    except Exception as e:
-        print(f"\n✅ Test 2 PASÓ: Falló correctamente después de agotar reintentos")
-        print(f"   Error final: {str(e)[:50]}")
+def test_retry_logic_failure():
+    """Verifica que el retry falle después de max_attempts."""
+    with pytest.raises(Exception) as excinfo:
+        always_fails_func()
+    assert "Esta función siempre falla" in str(excinfo.value)
 
-    print("\n" + "=" * 60)
-    print("TEST 3: Verificar estrategias de backoff")
-    print("=" * 60)
 
+def test_backoff_strategies():
+    """Verifica el cálculo de delays."""
     from core.retry_handler import RetryHandler, RetryStrategy
 
     handler_exp = RetryHandler(strategy=RetryStrategy.EXPONENTIAL, base_delay=2.0)
-    handler_lin = RetryHandler(strategy=RetryStrategy.LINEAR, base_delay=2.0)
-    handler_fib = RetryHandler(strategy=RetryStrategy.FIBONACCI, base_delay=2.0)
-
-    print("\nDelays para 5 intentos:")
-    print("Intento | Exponencial | Linear | Fibonacci")
-    print("-" * 45)
-    for i in range(5):
-        exp_delay = handler_exp.calculate_delay(i)
-        lin_delay = handler_lin.calculate_delay(i)
-        fib_delay = handler_fib.calculate_delay(i)
-        print(
-            f"  {i + 1}     |    {exp_delay:5.1f}s    | {lin_delay:4.1f}s |   {fib_delay:5.1f}s"
-        )
-
-    print("\n✅ Test 3 PASÓ: Estrategias calculan delays correctamente")
-
-    print("\n" + "=" * 60)
-    print("TODOS LOS TESTS COMPLETADOS")
-    print("=" * 60)
-
-
-if __name__ == "__main__":
-    run_tests()
+    # Simple check de que incremente
+    assert handler_exp.calculate_delay(2) > handler_exp.calculate_delay(1)
