@@ -1,6 +1,7 @@
 import hashlib
 import unicodedata
 from datetime import datetime
+import logging
 
 import pandas as pd
 
@@ -44,22 +45,36 @@ class SecDataTransformer:
             logger.info(f"Hora SEC detectada: {dt}")
         except (ValueError, TypeError, IndexError, AttributeError):
             dt = datetime.now()
-            logger.warning(
-                f"No se detectó hora SEC. Usando local: {dt.strftime('%H:%M')}"
-            )
+            # Silenciamos aviso repetitivo para no ensuciar la barra de progreso
+            # logger.warning(f"No se detectó hora SEC. Usando local: {dt.strftime('%H:%M')}")
 
         return dt.strftime("%Y-%m-%d %H:%M:%S"), dt.date()
 
-    def _create_robust_id(self, comuna: str, empresa: str, timestamp: str) -> str:
-        """Genera un hash MD5 único basado en la ubicación y el tiempo."""
-        unique_str = f"{comuna}_{empresa}_{timestamp}"
+    def _create_robust_id(
+        self, comuna: str, empresa: str, fecha_dt, hora_time, afectados: int
+    ) -> str:
+        """Genera un hash MD5 único basado en el CONTENIDO del corte (Deduplicación).
+
+        Args:
+            comuna: Nombre normalizado de la comuna.
+            empresa: Nombre normalizado de la empresa.
+            fecha_dt: Fecha del incidente (date).
+            hora_time: Hora del incidente (time).
+            afectados: Cantidad de clientes afectados.
+
+        Returns:
+            str: Hash MD5 único para identificar el evento exacto.
+        """
+        # Formato determinista
+        fecha_str = fecha_dt.strftime("%Y%m%d")
+        hora_str = hora_time.strftime("%H%M")
+
+        # Hash Key: SANTIAGO_ENEL_20231025_1430_500
+        unique_str = f"{comuna}_{empresa}_{fecha_str}_{hora_str}_{afectados}"
         return hashlib.md5(unique_str.encode()).hexdigest()
 
     def transform(self, raw_data: list, server_time_raw: any = None) -> list:
         """Procesa los datos crudos capturados para su almacenamiento.
-
-        Aplica agrupaciones por región, comuna y empresa, suma los afectados
-        y calcula la antigüedad del corte en días respecto a la hora del servidor.
 
         Args:
             raw_data (list): Lista de diccionarios con datos provenientes de la API.
@@ -71,13 +86,13 @@ class SecDataTransformer:
         if not raw_data:
             return []
 
-        # 1. Preparar referencias de tiempo usando el nuevo método centralizado
+        # 1. Preparar referencias de tiempo
         timestamp_actual, referencia_hoy = self._parse_server_time(server_time_raw)
 
         # 2. Convertir a DataFrame para agrupar
         df = pd.DataFrame(raw_data)
 
-        # Agrupar y sumar (Resuelve fragmentación de datos)
+        # Agrupar y sumar
         df_grouped = (
             df.groupby(
                 ["NOMBRE_REGION", "NOMBRE_COMUNA", "NOMBRE_EMPRESA", "FECHA_INT_STR"]
@@ -86,8 +101,6 @@ class SecDataTransformer:
             .reset_index()
         )
 
-        print(df_grouped)
-
         registros_procesados = []
 
         for _, row in df_grouped.iterrows():
@@ -95,25 +108,37 @@ class SecDataTransformer:
             comuna = self._normalize_text(str(row["NOMBRE_COMUNA"]))
             empresa = self._normalize_text(str(row["NOMBRE_EMPRESA"]))
 
-            # FECHA_INT_STR ya viene como string de la SEC (ej: 19/01/2026)
             fecha_str = str(row["FECHA_INT_STR"]).strip()
             afectados = int(row["CLIENTES_AFECTADOS"])
 
-            # Cálculo de la antigüedad
+            # Objetos de tiempo para la DB
             try:
-                fecha_incidente = datetime.strptime(fecha_str, "%d/%m/%Y").date()
-                dias_antiguedad = (referencia_hoy - fecha_incidente).days
+                dt_incidente = datetime.strptime(fecha_str, "%d/%m/%Y")
+                fecha_incidente_date = dt_incidente.date()
+                dias_antiguedad = (referencia_hoy - fecha_incidente_date).days
             except:
+                # Fallback al tiempo del servidor del batch
+                dt_server = datetime.strptime(timestamp_actual, "%Y-%m-%d %H:%M:%S")
+                fecha_incidente_date = dt_server.date()
+                dt_incidente = dt_server
                 dias_antiguedad = 0
 
-            # ID robusto: Incluye afectados para detectar cambios en tiempo real
-            corte_id = self._create_robust_id(comuna, empresa, timestamp_actual)
+            hora_incidente = dt_incidente.time()
+
+            # Generamos ID basado en contenido para deduplicar automáticamente
+            corte_id = self._create_robust_id(
+                comuna, empresa, fecha_incidente_date, hora_incidente, afectados
+            )
 
             registros_procesados.append(
                 {
                     "ID_UNICO": corte_id,
-                    "TIMESTAMP": timestamp_actual,
-                    "FECHA": fecha_str,
+                    "TIMESTAMP_SERVER": datetime.strptime(
+                        timestamp_actual, "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "FECHA_STR": fecha_str,
+                    "FECHA_DT": fecha_incidente_date,
+                    "HORA_INT": hora_incidente,
                     "REGION": region,
                     "COMUNA": comuna,
                     "EMPRESA": empresa,

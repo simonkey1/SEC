@@ -72,3 +72,26 @@ def test_calculation_antiquity(transformer):
 
     result = transformer.transform(raw_data, server_time_raw=server_time)
     assert result[0]["DIAS_ANTIGUEDAD"] == 2
+
+
+def test_fallback_invalid_date(transformer):
+    """Debe usar la fecha del servidor si el string de la SEC falla (evita error 2026)."""
+    server_time = "25/01/2026 21:00"
+    raw_data = [
+        {
+            "NOMBRE_REGION": "REGION_PRUEBA",
+            "NOMBRE_COMUNA": "COMUNA_PRUEBA",
+            "NOMBRE_EMPRESA": "EMPRESA_PRUEBA",
+            "FECHA_INT_STR": "FECHA_BASURA",  # Fallo de parseo
+            "CLIENTES_AFECTADOS": 5,
+            "ACTUALIZADO_HACE": "1 min",
+        }
+    ]
+
+    # Debe caer en el except y usar la fecha del servidor
+    result = transformer.transform(raw_data, server_time_raw=server_time)
+
+    assert len(result) == 1
+    # La fecha del incidente debe ser la del servidor del batch (2026-01-25)
+    assert result[0]["FECHA_DT"] == date(2026, 1, 25)
+    assert result[0]["DIAS_ANTIGUEDAD"] == 0

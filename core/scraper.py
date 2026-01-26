@@ -1,6 +1,12 @@
 ﻿from playwright.sync_api import Response, sync_playwright
+import logging
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from config import URL_SEC_PRINCIPAL
+from core.retry_handler import retry_with_backoff
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 
 class SECScraper:
@@ -38,14 +44,14 @@ class SECScraper:
                     # Si es una lista y tiene datos, es lo que buscamos
                     if isinstance(data, list) and len(data) > 0:
                         self.registros.extend(data)
-                        print(
-                            f"Ô£à ┬íDatos capturados exitosamente! ({len(data)} registros via {method})"
+                        logger.info(
+                            f"Datos capturados exitosamente! ({len(data)} registros via {method})"
                         )
                 else:
-                    # Si el status no es 200, algo fall├│ en esa petici├│n
+                    # Si el status no es 200, algo falló en esa petición
                     if method == "POST":
-                        print(
-                            f"ÔÜá´©Å El POST a GetPorFecha devolvi├│ status {response.status}"
+                        logger.warning(
+                            f"El POST a GetPorFecha devolvió status {response.status}"
                         )
             except Exception:
                 # Silenciamos errores de parsing si la respuesta no era JSON
@@ -59,38 +65,65 @@ class SECScraper:
             except Exception:
                 pass
 
+    @retry_with_backoff(
+        max_attempts=5,
+        base_delay=3.0,
+        max_delay=60.0,
+        strategy="exponential",
+        exceptions=(PlaywrightTimeoutError, Exception),
+        logger=logger,
+    )
     def run(self) -> dict:
         """Starts the navigation and data capture process.
 
         Launches a headless browser, navigates to the SEC page,
         waits for AJAX requests and returns the results.
 
+        Includes automatic retry with exponential backoff on failures.
+
         Returns:
             dict: Dictionary containing 'data' (records) and 'hora_server'.
+
+        Raises:
+            Exception: If all retry attempts fail.
         """
         self.registros = []  # Limpiamos el saco
         self.hora_server = None
-        print("­ƒÜÇ Iniciando navegador...")
+        logger.info("🚀 Iniciando navegador...")
 
-        with sync_playwright() as p:
-            # Usar un User-Agent real para evitar bloqueos
-            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(user_agent=user_agent)
-            page = context.new_page()
+        try:
+            with sync_playwright() as p:
+                # Usar un User-Agent real para evitar bloqueos
+                user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(user_agent=user_agent)
+                page = context.new_page()
 
-            page.on("response", self.handle_response)
+                page.on("response", self.handle_response)
 
-            print("­ƒöù Navegando a la SEC...")
-            page.goto(URL_SEC_PRINCIPAL, timeout=60000)
+                logger.info("📍 Navegando a la SEC...")
+                page.goto(URL_SEC_PRINCIPAL, timeout=60000)
 
-            # Esperamos un tiempo prudente para que la p├ígina tire sus peticiones AJAX
-            print("ÔÅ│ Esperando datos (30s)...")
-            page.wait_for_timeout(30000)
+                # Esperamos un tiempo prudente para que la página tire sus peticiones AJAX
+                logger.info("⏳ Esperando datos (30s)...")
+                page.wait_for_timeout(30000)
 
-            browser.close()
+                browser.close()
 
-        if not self.registros:
-            print("ÔØî No se encontr├│ la petici├│n 'GetPorFecha' en esta vuelta.")
+            if not self.registros:
+                logger.warning(
+                    "⚠️ No se encontró la petición 'GetPorFecha' en esta vuelta."
+                )
+                raise Exception("No se capturaron datos de la API")
 
-        return {"data": self.registros, "hora_server": self.hora_server}
+            logger.info(
+                f"✅ Scraping exitoso: {len(self.registros)} registros capturados"
+            )
+            return {"data": self.registros, "hora_server": self.hora_server}
+
+        except PlaywrightTimeoutError as e:
+            logger.error(f"❌ Timeout en navegación: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"❌ Error en scraping: {str(e)}")
+            raise
