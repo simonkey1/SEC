@@ -72,6 +72,17 @@ graph TD
 - **Silver Layer**: PostgreSQL local donde vive la `fact_interrupciones` deduplicada.
 - **Gold Layer**: Vistas optimizadas y JSONs pre-calculados que se suben a Supabase para alimentar el frontend. Esto nos da "almacenamiento infinito" en términos de análisis, ya que solo mantenemos lo justo y necesario para la visualización activa.
 
+### 3.1 El Puente de Sincronización (The Sync Bridge)
+El script `scripts/etl/sync_dashboard_data.py` es el encargado de materializar la "Capa Gold". Su función es desacoplar el peso del Big Data (Parquet de millones de filas) de la agilidad que requiere el Frontend (JSON livianos).
+
+#### Lógica de Transformación
+1.  **Carga**: Lee el archivo `golden_interrupciones.parquet` usando **Polars** (por velocidad).
+2.  **Agregación**: Genera payloads específicos para cada visualización. Por ejemplo, para el *Market Map*, agrupa por región/empresa y calcula el índice de inestabilidad.
+3.  **Upsert**: Se conecta a Supabase vía API y actualiza la tabla `dashboard_stats` usando el ID del dataset (ej: `market_map`, `eda_quality_stats`).
+
+> **¿Por qué no conectar el Frontend directo a la BD?**
+> Para proteger la base de datos de análisis de consultas masivas concurrentes. Al pre-calcular y servir JSONs estáticos, el dashboard carga en milisegundos sin estresar el motor de datos principal.
+
 ---
 
 ## 4. Transparencia de Datos y EDA
