@@ -9,6 +9,9 @@
 
 Este documento detalla la ingeniería subyacente que permitió construir el dataset de 6.2 millones de registros utilizado en el *Research Paper*. A diferencia de un análisis estático, este proyecto requirió la construcción de una infraestructura ETL (Extract, Transform, Load) capaz de reconstruir la historia de las interrupciones eléctricas en Chile a partir de "trazos efímeros" publicados por el regulador.
 
+> [!TIP]
+> Para una narrativa más detallada sobre la evolución del proyecto y los desafíos de ingeniería, consulta la **[Crónica Técnica](technical_chronicle.md)**.
+
 ### 1.1 Diagrama de Alto Nivel
 
 ```mermaid

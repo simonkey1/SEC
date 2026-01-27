@@ -95,5 +95,12 @@ python scripts/analysis/generate_paper_plots.py
 
 ---
 
-## 🎓 Next Steps: Frontend & Visualization
-The next phase involves building a **SvelteKit Dashboard** to explore this data interactively, moving beyond static PNGs to dynamic maps and time sliders.
+## 🌐 Live Dashboard
+The interactive data visualization platform is now live! Explore the data, maps, and case studies directly in your browser:
+
+👉 **[Launch Dashboard](https://dashboard-sec.vercel.app/)**
+
+*Features:*
+- **Instability Map**: Validated heatmaps of service interruptions.
+- **Time Series**: Historical evolution of failures (2017-2025).
+- **Investment ROI**: Filtering by region and company.

@@ -137,9 +137,54 @@ class DashboardSyncer:
                 "year": 2019,
                 "type": "Lag (3 Años)",
                 "delta": -5.7,
-                "context": "Obra masiva que tardó años en permeabilizar la red local.",
             },
         ]
+
+    def generate_eda_quality_metrics(self, df):
+        print("🕵️ Generando Métricas de Calidad de Datos (EDA)...")
+        total = len(df)
+
+        # Conteo de imputaciones (Simulado/Real basado en datos parquet)
+        # Nota: En parquet 'nombre_region' ya viene resuelto, si era desconocido puede ser null o "DESCONOCIDO"
+        # Ajustar según lógica de transformación real.
+
+        afectados_zero = df.filter(pl.col("clientes_afectados") == 0).height
+        geo_unknown = df.filter(pl.col("nombre_region") == "DESCONOCIDO").height
+        empresa_unknown = df.filter(pl.col("nombre_empresa") == "DESCONOCIDO").height
+
+        return [
+            {
+                "category": "Afectados = 0 (Imputado)",
+                "count": afectados_zero,
+                "percentage": float(afectados_zero / total) if total > 0 else 0,
+            },
+            {
+                "category": "Geografía Desconocida",
+                "count": geo_unknown,
+                "percentage": float(geo_unknown / total) if total > 0 else 0,
+            },
+            {
+                "category": "Empresa Desconocida",
+                "count": empresa_unknown,
+                "percentage": float(empresa_unknown / total) if total > 0 else 0,
+            },
+        ]
+
+    def generate_eda_project_dist(self):
+        print("🏗️ Generando Distribución de Proyectos SEIA (EDA)...")
+        seia = SeiaAnalyzer()
+        try:
+            df_seia = seia.load_and_clean()
+            # Agrupar solo por región para el gráfico de barras
+            dist = (
+                df_seia.group_by("nombre_region")
+                .agg(pl.len().alias("count"))
+                .sort("count", descending=True)
+            )
+            return dist.to_dicts()
+        except Exception as e:
+            print(f"⚠️ Error procesando SEIA para EDA: {e}")
+            return []
 
     def sync_to_supabase(self):
         df = self.load_golden_data()
@@ -149,6 +194,9 @@ class DashboardSyncer:
             "investment_roi": self.generate_investment_roi_ranking(df),
             "company_ranking": self.generate_company_ranking(df),
             "investment_validation": self.generate_investment_validation(),
+            # Nuevos datasets para Documento Técnico
+            "eda_quality_stats": self.generate_eda_quality_metrics(df),
+            "eda_projects_dist": self.generate_eda_project_dist(),
         }
         print("☁️ Subiendo a Supabase...")
         for key, data in payloads.items():

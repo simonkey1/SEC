@@ -1,0 +1,52 @@
+# Especificación de Integración Frontend: Documento Técnico
+
+Este documento detalla la estructura de datos disponible en Supabase (`dashboard_stats`) específicamente para replicar las visualizaciones de la **Crónica Técnica**.
+
+> **Nota**: El resto de visualizaciones (Market Map, ROI, etc.) se consideran ya resueltas y no se incluyen en esta especificación.
+
+---
+
+## 🏗️ Transparencia de Datos (Data Quality)
+**ID Payload**: `eda_quality_stats`
+
+Datos para la **Figura 1** de la Crónica. Muestra la cantidad de registros que requirieron imputación.
+
+### Schema TypeScript
+```typescript
+interface DataQualityStat {
+  category: string;     // Ej: "Afectados = 0 (Imputado)"
+  count: number;        // Cantidad de registros absolutos
+  percentage: number;   // 0.0 a 1.0 (Ej: 0.05 es 5%)
+}
+```
+
+### Reglas de Visualización
+- **Tipo de Gráfico**: Bar Chart (Horizontal o Vertical).
+- **Mapeo**:
+    - **Eje Categórico**: `category`.
+    - **Eje Numérico**: `count`.
+- **Tooltip/Label**: Mostrar tanto el número absoluto como el porcentaje formateado (ej: `0 (0.00%)`).
+- **Contexto**: Explicar que "0" es el resultado ideal (reglas de consistencia no activadas).
+
+---
+
+## 🏗️ Distribución de Proyectos (SEIA)
+**ID Payload**: `eda_projects_dist`
+
+Datos para la **Figura 2** de la Crónica. Muestra la cantidad de proyectos de inversión eléctrica por región.
+
+### Schema TypeScript
+```typescript
+interface ProjectDistributionItem {
+  nombre_region: string; // Ej: "ANTOFAGASTA", "METROPOLITANA"
+  count: number;         // Cantidad de proyectos
+}
+```
+
+### Reglas de Visualización
+- **Tipo de Gráfico**: Bar Chart Horizontal (para que los nombres largos de regiones sean legibles).
+- **Ordenamiento**: Descendente por `count` (ya viene ordenado del backend, pero confirmar visualmente).
+- **Mapeo**:
+    - **Eje Y**: `nombre_region`.
+    - **Eje X**: `count`.
+- **Estilo**: Usar una paleta secuencial suave (ej: Blues).
