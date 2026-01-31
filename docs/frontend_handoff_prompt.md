@@ -1,24 +1,24 @@
-# PROMPT MAESTRO PARA CONSTRUCCIÓN DE FRONTEND (SvelteKit)
+# MASTER PROMPT FOR FRONTEND CONSTRUCTION (SvelteKit)
 
-**Rol**: Eres un Ingeniero de Software experto en SvelteKit, TailwindCSS y Visualización de Datos (D3.js / LayerChart).
+**Role**: You are an expert Software Engineer in SvelteKit, TailwindCSS, and Data Visualization (D3.js / LayerChart).
 
-**Contexto del Proyecto**: 
-Hemos procesado 6.2 millones de registros de cortes de luz en Chile (2017-2025). La data ya está procesada, validada y cargada en **Supabase**. Tu misión es construir la interfaz pública ("Estado de la Red") que cuente la historia de la fragilidad eléctrica y el impacto de la inversión.
+**Project Context**: 
+We have processed 6.2 million records of power outages in Chile (2017-2025). The data is already processed, validated, and loaded into **Supabase**. Your mission is to build the public interface ("Network Status") that tells the story of electrical fragility and the impact of investment.
 
 ---
 
-## 1. Stack Tecnológico
+## 1. Technology Stack
 - **Framework**: SvelteKit (App Router)
-- **Estilos**: TailwindCSS (Modo Oscuro, Paleta "Ciberpunk Institucional": Slate-900, Emerald-400 para éxito, Rose-500 para fallas).
-- **Gráficos**: LayerChart o ECharts (necesitamos alto rendimiento).
-- **Backend/Data**: Supabase (Tabla `dashboard_stats`).
+- **Styles**: TailwindCSS (Dark Mode, "Institutional Cyberpunk" Palette: Slate-900, Emerald-400 for success, Rose-500 for failures).
+- **Graphics**: LayerChart or ECharts (high performance needed).
+- **Backend/Data**: Supabase (Table `dashboard_stats`).
 
 ---
 
-## 2. La Fuente de Datos (Supabase)
-La data ya existe en una tabla Key-Value para máxima velocidad. No tienes que procesar nada, solo fetchear JSONs.
+## 2. The Data Source (Supabase)
+The data already exists in a Key-Value table for maximum speed. You don't have to process anything, just fetch JSONs.
 
-**Tabla SQL**:
+**SQL Table**:
 ```sql
 create table dashboard_stats (
   id text primary key, -- IDs: market_map, time_series, investment_roi, company_ranking, investment_validation
@@ -26,54 +26,54 @@ create table dashboard_stats (
 );
 ```
 
-**IDs Disponibles y Estructura JSON**:
-1.  `market_map`: Lista de comunas con `instability_index` (0-100) para colorear un mapa de Chile.
-2.  `time_series`: Array de objetos `{mes: '2020-01-01', afectados: 5000}`.
-3.  `investment_roi`: Ranking de regiones con `efficiency_ratio` y `maturity_note` (Ej: "Lag de 3 años").
-4.  `company_ranking`: Lista de empresas (`nombre_empresa`, `total_afectados`) para el "Ranking de la Vergüenza".
-5.  `investment_validation`: Array de 4 casos de estudio (`project`, `delta`, `context`) probando el éxito/fracaso de inversiones.
+**Available IDs and JSON Structure**:
+1.  `market_map`: List of communes with `instability_index` (0-100) to color a map of Chile.
+2.  `time_series`: Array of objects `{month: '2020-01-01', affected: 5000}`.
+3.  `investment_roi`: Ranking of regions with `efficiency_ratio` and `maturity_note` (e.g., "3-year Lag").
+4.  `company_ranking`: List of companies (`company_name`, `total_affected`) for the "Ranking of Shame."
+5.  `investment_validation`: Array of 4 case studies (`project`, `delta`, `context`) proving investment success/failure.
 
 ---
 
-## 3. Requerimientos de Visualización (Las 5 Vistas Clave)
+## 3. Visualization Requirements (The 5 Key Views)
 
-### A. El Mapa de Calor ("La Cicatriz")
-- **Visual**: Un mapa de Chile dividido por comunas/regiones.
-- **Lógica**: Colorear según `instability_index`. Rojo intenso = Zona Crítica.
-- **Interacción**: Hover muestra "Comuna X: Y horas sin luz promedio".
+### A. The Heatmap ("The Scar")
+- **Visual**: A map of Chile divided by communes/regions.
+- **Logic**: Color according to `instability_index`. Intense red = Critical Zone.
+- **Interaction**: Hover shows "Commune X: Y average hours without power."
 
-### B. El Monitor de Pulso ("Zapping")
-- **Visual**: Gráfico de línea de tiempo completo (2017-2025).
-- **Estilo**: Similar a un monitor cardíaco o de acciones.
-- **Narrativa**: Debe resaltar los picos de 2017 (Nieve) y 2024 (Viento) como "Eventos Cisne Negro".
+### B. The Pulse Monitor ("Zapping")
+- **Visual**: Full time-series graph (2017-2025).
+- **Style**: Similar to a heart rate or stock monitor.
+- **Narrative**: Should highlight the 2017 (Snow) and 2024 (Wind) peaks as "Black Swan Events."
 
-### C. El Muro de la Ineficiencia (Social ROI)
-- **Visual**: Gráfico de barras horizontal.
-- **Ejes**: Eje Y = Región, Eje X = Ineficiencia ($ gastado / gente sin luz).
-- **Detalle Crítico**: Debes mostrar los tooltips de `maturity_note` (Ej: "Ñuble aparece mal, pero es porque sus obras se entregan en 2027").
+### C. The Wall of Inefficiency (Social ROI)
+- **Visual**: Horizontal bar chart.
+- **Axes**: Y-axis = Region, X-axis = Inefficiency ($ spent / people without power).
+- **Critical Detail**: You must show the `maturity_note` tooltips (e.g., "Ñuble looks bad, but it's because its works are delivered in 2027").
 
-### D. Ranking de Operadores (Bad Actors)
-- **Visual**: Tabla estilizada o Leaderboard.
-- **Orden**: Por `total_clientes_afectados`.
-- **Objetivo**: Transparencia total. Quién falla más.
+### D. Operator Ranking (Bad Actors)
+- **Visual**: Stylized table or Leaderboard.
+- **Order**: By `total_affected_customers`.
+- **Goal**: Full transparency. Who fails the most.
 
-### E. Evidencia de Inversión (Antes/Después)
-- **Visual**: Tarjetas comparativas o gráfico de flechas (Slope Chart).
-- **Data**: Usar el JSON `investment_validation`.
-- **Historia**: Mostrar cómo Cardones-Polpaico bajó los cortes tras 3 años (Lag), mientras que REDENOR los bajó inmediatamente.
-
----
-
-## 4. Instrucciones de Diseño (Look & Feel)
-- **Vibe**: "Periodismo de Datos Premium". Serio, limpio, tipografía Sans-Serif (Inter o Geist).
-- **Colores**: Fondo oscuro (`bg-slate-950`). Textos gris claro (`text-slate-300`). Acentos semánticos (Rojo = Corte, Verde = Inversión aprobada).
-- **Responsive**: Debe funcionar perfecto en móvil (la gente revisa la luz desde el celular).
+### E. Investment Evidence (Before/After)
+- **Visual**: Comparative cards or slope chart.
+- **Data**: Use the `investment_validation` JSON.
+- **Story**: Show how Cardones-Polpaico lowered outages after 3 years (Lag), while REDENOR lowered them immediately.
 
 ---
 
-## 5. Tu Tarea Inicial
-1.  Inicializa el proyecto SvelteKit.
-2.  Crea un cliente Supabase simple para leer `dashboard_stats`.
-3.  Implementa la "Overview Page" que cargue estos 5 JSONs y los despliegue en un Grid CSS bento-style.
+## 4. Design Instructions (Look & Feel)
+- **Vibe**: "Premium Data Journalism." Serious, clean, Sans-Serif typography (Inter or Geist).
+- **Colors**: Dark background (`bg-slate-950`). Light gray text (`text-slate-300`). Semantic accents (Red = Outage, Green = Approved investment).
+- **Responsive**: Must work perfectly on mobile (people check their power from their phones).
 
-¡Comienza!
+---
+
+## 5. Your Initial Task
+1.  Initialize the SvelteKit project.
+2.  Create a simple Supabase client to read `dashboard_stats`.
+3.  Implement the "Overview Page" that loads these 5 JSONs and displays them in a bento-style CSS Grid.
+
+Start!

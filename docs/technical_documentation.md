@@ -1,14 +1,14 @@
-# Documentación Técnica: Pipeline de Datos de Distribución Eléctrica
+# Technical Documentation: Electrical Distribution Data Pipeline
 
-**Versión**: 1.0  
+**Version**: 1.0  
 **Stack**: Python 3.12, Polars, PostgreSQL, Supabase  
-**Repositorio**: `kaggle/luz`
+**Repository**: `kaggle/luz`
 
 ---
 
-## 1. Arquitectura del Sistema
+## 1. System Architecture
 
-El sistema sigue una arquitectura ELT (Extract, Load, Transform) moderna, diseñada para manejar alto volumen de eventos (6.2M+) con latencia mínima de consulta para el dashboard final.
+The system follows a modern ELT (Extract, Load, Transform) architecture, designed to handle high event volumes (6.2M+) with minimal query latency for the final dashboard.
 
 ```mermaid
 graph LR
@@ -21,80 +21,80 @@ graph LR
 
 ---
 
-## 2. Capa de Ingesta (Scraping)
+## 2. Ingestion Layer (Scraping)
 
-### 2.1 Estrategia de Extracción
-La fuente de datos (SEC) no ofrece API pública. Se desarrolló un scraper asíncrono (`async_historical_scraper.py`) para reconstruir la historia de 2017-2025.
+### 2.1 Extraction Strategy
+The data source (SEC) does not offer a public API. An asynchronous scraper (`async_historical_scraper.py`) was developed to reconstruct the history from 2017-2025.
 
-*   **Librerías**: `aiohttp`, `asyncio`, `beautifulsoup4`.
-*   **Patrón de Diseño**: Producer-Consumer con Semáforo (limitado a 50 requests concurrentes) para no saturar el servidor origen.
-*   **Manejo de Errores**: Exponential Backoff para retries en códigos 503/504.
-*   **Resultados**: 53 archivos mensuales procesados en < 4 minutos.
+*   **Libraries**: `aiohttp`, `asyncio`, `beautifulsoup4`.
+*   **Design Pattern**: Producer-Consumer with Semaphore (limited to 50 concurrent requests) to avoid overwhelming the source server.
+*   **Error Handling**: Exponential Backoff for retries on 503/504 codes.
+*   **Results**: 53 monthly files processed in < 4 minutes.
 
-### 2.2 Almacenamiento Raw
-Los datos crudos se vierten en PostgreSQL sin transformación para preservar la "verdad del origen".
+### 2.2 Raw Storage
+Raw data is poured into PostgreSQL without transformation to preserve the "source truth."
 
 ---
 
-## 3. Capa de Modelado (PostgreSQL)
+## 3. Modeling Layer (PostgreSQL)
 
-Se implementó un **Esquema Estrella** (Star Schema) para facilitar consultas analíticas.
+A **Star Schema** was implemented to facilitate analytical queries.
 
-### 3.1 Esquema `public`
-*   `fact_interrupciones`: Tabla de hechos (6.2M filas).
+### 3.1 `public` Schema
+*   `fact_interrupciones`: Fact table (6.2M rows).
     *   `id` (PK), `fecha_inicio`, `clientes_afectados`, `duracion_estimada`.
     *   FKs: `region_id`, `comuna_id`, `empresa_id`.
-*   `dim_comunas`: Dimensión geográfica (normalizada con códigos CUT).
-*   `dim_empresas`: Dimensión de operadores (Normalización de nombres: "CGE S.A." -> "CGE").
+*   `dim_comunas`: Geographic dimension (normalized with CUT codes).
+*   `dim_empresas`: Operator dimension (Name normalization: "CGE S.A." -> "CGE").
 
-### 3.2 Desafíos de Integridad
-*   **Duplicados**: El origen reporta el mismo evento con actualizaciones.
-*   **Solución**: Se generó un hash único (MD5) basado en `fecha + comuna + empresa` para deduplicar eventos, manteniendo solo la última versión del snapshot.
-
----
-
-## 4. Capa de Transformación (Polars)
-
-Para el análisis masivo (EDA) y la generación de métricas, se utilizó **Polars** por su eficiencia en memoria y velocidad Vectorizada.
-
-### 4.1 Limpieza de Datos
-*   **Micro-cortes**: Se filtraron eventos con duración < 1 minuto (considerados ruido de reconectadores).
-*   **Normalización Temporal**: Conversión de timestamps a UTC-4 (Santiago).
-*   **Ceros Falsos**: Se imputaron valores de clientes afectados usando promedios históricos por comuna cuando el origen reportaba 0 en eventos masivos.
-
-### 4.2 Enriquecimiento Geográfico
-Cruces espaciales con datos censales para calcular KPIs relativos (Afectados por 100k habitantes).
+### 3.2 Integrity Challenges
+*   **Duplicates**: The source reports the same event with updates.
+*   **Solution**: A unique hash (MD5) was generated based on `date + commune + company` to deduplicate events, keeping only the latest version of the snapshot.
 
 ---
 
-## 5. Capa de Servicio (Supabase)
+## 4. Transformation Layer (Polars)
 
-Para el Frontend, se optó por un patrón de **"Pre-computed JSONs"** para evitar latencia SQL en tiempo real.
+For massive analysis (EDA) and metric generation, **Polars** was used for its memory efficiency and vectorized speed.
 
-### 5.1 Tabla `dashboard_stats`
-Almacén Key-Value optimizado para lectura rápida.
+### 4.1 Data Cleaning
+*   **Micro-outages**: Events with duration < 1 minute (considered recloser noise) were filtered.
+*   **Temporal Normalization**: Conversion of timestamps to UTC-4 (Santiago).
+*   **False Zeros**: Affected customer values were imputed using historical averages per commune when the source reported 0 during massive events.
 
-| Key (ID) | Descripción | Estructura JSON |
+### 4.2 Geographic Enrichment
+Spatial joins with census data to calculate relative KPIs (Affected per 100k inhabitants).
+
+---
+
+## 5. Serving Layer (Supabase)
+
+For the Frontend, a **"Pre-computed JSONs"** pattern was chosen to avoid near-real-time SQL latency.
+
+### 5.1 `dashboard_stats` Table
+Key-Value store optimized for fast reading.
+
+| Key (ID) | Description | JSON Structure |
 | :--- | :--- | :--- |
-| `market_map` | Datos para mapa de calor | `[{comuna: "Maipú", index: 85}, ...]` |
-| `time_series` | Evolución mensual | `[{mes: "2024-08", afectados: 1.2M}, ...]` |
-| `company_ranking` | Ranking de desempeño | `[{empresa: "CGE", severidad: High}, ...]` |
+| `market_map` | Heatmap data | `[{comuna: "Maipú", index: 85}, ...]` |
+| `time_series` | Monthly evolution | `[{mes: "2024-08", afectados: 1.2M}, ...]` |
+| `company_ranking` | Performance ranking | `[{empresa: "CGE", severidad: High}, ...]` |
 
-### 5.2 Sincronización
-El script `sync_dashboard_data.py` regenera estos JSONs desde el "Golden Parquet" y realiza un `UPSERT` en Supabase.
-*   **Beneficio**: El usuario final recibe un JSON estático. Carga instantánea (< 100ms).
-*   **Seguridad**: Políticas RLS configuradas para permitir lectura pública y escritura solo autorizada.
-
----
-
-## 6. Stack de Análisis (Ciencia de Datos)
-
-Scripts Python modulares para validación de hipótesis:
-*   `validate_improvement.py`: Test estadístico (t-test simplificado) para comparar ventanas de tiempo Pre/Post inversión.
-*   `social_roi_analysis.py`: Cálculo de ratios de eficiencia de inversión pública.
+### 5.2 Synchronization
+The `sync_dashboard_data.py` script regenerates these JSONs from the "Golden Parquet" and performs an `UPSERT` into Supabase.
+*   **Benefit**: The end user receives a static JSON. Instant load (< 100ms).
+*   **Security**: RLS policies configured to allow public reading and only authorized writing.
 
 ---
 
-## 7. Conclusión Técnica
+## 6. Analysis Stack (Data Science)
 
-La infraestructura es robusta, escalable y desacoplada. El uso de archivos intermedios (Parquet) y JSONs pre-cocinados (Supabase) asegura que el análisis pesado no impacte la experiencia de usuario en el Frontend.
+Modular Python scripts for hypothesis validation:
+*   `validate_improvement.py`: Statistical test (simplified t-test) to compare Pre/Post investment time windows.
+*   `social_roi_analysis.py`: Public investment efficiency ratio calculation.
+
+---
+
+## 7. Technical Conclusion
+
+The infrastructure is robust, scalable, and decoupled. The use of intermediate files (Parquet) and pre-cooked JSONs (Supabase) ensures that heavy analysis does not impact user experience on the Frontend.

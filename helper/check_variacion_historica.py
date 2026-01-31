@@ -2,52 +2,50 @@ import os
 
 import pandas as pd
 
-from core.database import csv_historico, csv_tiempo_real
+from core.database import csv_historical, csv_near_real_time
 
 
-def check_variacion_historico():
+def check_historical_variation():
     """
-    Replica la lógica de la medida DAX para comparar la suma de CLIENTES_AFECTADOS
-    entre el último y el penúltimo TIMESTAMP, pero asegurándose de que sean snapshots distintos.
+    Replicates the DAX measure logic to compare the sum of AFFECTED_CUSTOMERS
+    between the latest and the second-to-last TIMESTAMP, ensuring they are different snapshots.
     """
-    if not os.path.exists(csv_historico):
-        print("No existe el histórico, no se puede chequear variación.")
+    if not os.path.exists(csv_historical):
+        print("Historical file does not exist, cannot check variation.")
         return
 
-    df_hist = pd.read_csv(csv_historico, encoding="utf-8-sig")
+    df_hist = pd.read_csv(csv_historical, encoding="utf-8-sig")
     if len(df_hist) < 2:
-        print("No hay suficiente data en el histórico para calcular la variación.")
+        print("Not enough data in history to calculate variation.")
         return
 
-    # Obtenemos la lista de TIMESTAMP distintos y la ordenamos
-    timestamps_unicos = (
+    # Get the list of unique TIMESTAMPS and sort them
+    unique_timestamps = (
         df_hist["TIMESTAMP"].drop_duplicates().sort_values(ascending=True)
     )
-    if len(timestamps_unicos) < 2:
-        print("Solo hay un snapshot único, no hay penúltimo para comparar.")
+    if len(unique_timestamps) < 2:
+        print("Only one unique snapshot exists, no second-to-last one to compare.")
         return
 
-    # El último timestamp (ejecución más reciente)
-    ultimo_tiempo = timestamps_unicos.iloc[-1]
-    # El penúltimo timestamp (la ejecución anterior)
-    penultimo_tiempo = timestamps_unicos.iloc[-2]
+    # The latest timestamp (most recent execution)
+    latest_time = unique_timestamps.iloc[-1]
+    # The second-to-last timestamp (previous execution)
+    previous_time = unique_timestamps.iloc[-2]
 
-    # Sumar los CLIENTES_AFECTADOS en cada snapshot
-    afectados_ultimo = df_hist.loc[
-        df_hist["TIMESTAMP"] == ultimo_tiempo, "CLIENTES_AFECTADOS"
+    # Sum AFFECTED_CUSTOMERS in each snapshot
+    affected_latest = df_hist.loc[
+        df_hist["TIMESTAMP"] == latest_time, "CLIENTES_AFECTADOS"
     ].sum()
-    afectados_penultimo = df_hist.loc[
-        df_hist["TIMESTAMP"] == penultimo_tiempo, "CLIENTES_AFECTADOS"
+    affected_previous = df_hist.loc[
+        df_hist["TIMESTAMP"] == previous_time, "CLIENTES_AFECTADOS"
     ].sum()
 
-    variacion = afectados_ultimo - afectados_penultimo
+    variation = affected_latest - affected_previous
 
     print(f"🔎 Health Check:")
-    print(f"    Último snapshot: {ultimo_tiempo} → {afectados_ultimo} afectados")
+    print(f"    Latest snapshot: {latest_time} → {affected_latest} affected")
+    print(f"    Previous snapshot: {previous_time} → {affected_previous} affected")
+    print(f"    Variation (DAX-like): {variation}\n")
     print(
-        f"    Penúltimo snapshot: {penultimo_tiempo} → {afectados_penultimo} afectados"
-    )
-    print(f"    Variación (DAX-like): {variacion}\n")
-    print(
-        f"✅ Datos guardados en:\n📌 {csv_historico} (Histórico)\n📌 {csv_tiempo_real} (Tiempo Real)"
+        f"✅ Data saved to:\n📌 {csv_historical} (Historical)\n📌 {csv_near_real_time} (Near-Real-Time)"
     )

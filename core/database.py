@@ -14,10 +14,10 @@ from supabase import Client, create_client
 
 logger = logging.getLogger(__name__)
 
-# Rutas globales para gestión de archivos
+# Global paths for file management
 
 
-# En core/database.py
+# In core/database.py
 
 
 class SupabaseRepository:
@@ -43,7 +43,7 @@ class SupabaseRepository:
     def get_or_create_geografia(self, region: str, comuna: str) -> int:
         """Get or create geography dimension record."""
 
-        resultado = (
+        result = (
             self.supabase.table("dim_geografia")
             .select("id_geografia")
             .eq("nombre_region", region)
@@ -51,56 +51,56 @@ class SupabaseRepository:
             .execute()
         )
 
-        if resultado.data and len(resultado.data) > 0:
-            return resultado.data[0]["id_geografia"]
+        if result.data and len(result.data) > 0:
+            return result.data[0]["id_geografia"]
 
-        nuevo = (
+        new = (
             self.supabase.table("dim_geografia")
             .insert({"nombre_region": region, "nombre_comuna": comuna})
             .execute()
         )
-        return nuevo.data[0]["id_geografia"]
+        return new.data[0]["id_geografia"]
 
     def get_or_create_empresa(self, empresa: str) -> int:
         """Get or create company dimension record."""
-        resultado = (
+        result = (
             self.supabase.table("dim_empresa")
             .select("id_empresa")
             .eq("nombre_empresa", empresa)
             .execute()
         )
 
-        if resultado.data and len(resultado.data) > 0:
-            return resultado.data[0]["id_empresa"]
+        if result.data and len(result.data) > 0:
+            return result.data[0]["id_empresa"]
 
-        nuevo = (
+        new = (
             self.supabase.table("dim_empresa")
             .insert({"nombre_empresa": empresa})
             .execute()
         )
-        return nuevo.data[0]["id_empresa"]
+        return new.data[0]["id_empresa"]
 
     def get_or_create_tiempo(self, timestamp_str: str) -> int:
         """Get or create time dimension record."""
 
-        # 1. Parsear timestamp
+        # 1. Parse timestamp
         dt = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
 
-        # 2. Generar id_tiempo como entero (YYYYMMDDHHMM)
+        # 2. Generate time_id as integer (YYYYMMDDHHMM)
         id_tiempo = int(dt.strftime("%Y%m%d%H%M"))
 
-        # 3. Buscar si existe
-        resultado = (
+        # 3. Search if exists
+        result = (
             self.supabase.table("dim_tiempo")
             .select("id_tiempo")
             .eq("id_tiempo", id_tiempo)
             .execute()
         )
 
-        if resultado.data and len(resultado.data) > 0:
-            return id_tiempo  # ← Retornar el id_tiempo, no .data[0]
+        if result.data and len(result.data) > 0:
+            return id_tiempo  # ← Return the time_id, not .data[0]
 
-        # 4. Insertar nuevo
+        # 4. Insert new
         self.supabase.table("dim_tiempo").insert(
             {
                 "id_tiempo": id_tiempo,
@@ -112,95 +112,93 @@ class SupabaseRepository:
             }
         ).execute()
 
-        return id_tiempo  # ← Retornar el id_tiempo
+        return id_tiempo  # ← Return the time_id
 
-    def save_records(self, registros: list) -> dict:
+    def save_records(self, records: list) -> dict:
         """Save processed records to fact table."""
-        insertados = 0
-        duplicados = 0
-        errores = 0
+        inserted = 0
+        duplicates = 0
+        errors = 0
 
-        for registro in registros:
+        for record in records:
             try:
-                # Obtener FKs usando self (ya tienes la instancia)
+                # Get FKs using self
                 id_geografia = self.get_or_create_geografia(
-                    region=registro["REGION"], comuna=registro["COMUNA"]
+                    region=record["REGION"], comuna=record["COMUNA"]
                 )
-                id_empresa = self.get_or_create_empresa(empresa=registro["EMPRESA"])
-                id_tiempo = self.get_or_create_tiempo(
-                    timestamp_str=registro["TIMESTAMP"]
-                )
+                id_empresa = self.get_or_create_empresa(empresa=record["EMPRESA"])
+                id_tiempo = self.get_or_create_tiempo(timestamp_str=record["TIMESTAMP"])
 
-                # Insertar en fact table
+                # Insert into fact table
                 self.supabase.table("fact_interrupciones").insert(
                     {
                         "id_tiempo": id_tiempo,
                         "id_geografia": id_geografia,
                         "id_empresa": id_empresa,
-                        "clientes_afectados": registro["CLIENTES_AFECTADOS"],
-                        "hash_id": registro["ID_UNICO"],
+                        "clientes_afectados": record["CLIENTES_AFECTADOS"],
+                        "hash_id": record["ID_UNICO"],
                     }
                 ).execute()
 
-                insertados += 1
+                inserted += 1
 
             except Exception as e:
                 if "duplicate" in str(e).lower() or "unique" in str(e).lower():
-                    duplicados += 1
+                    duplicates += 1
                 else:
-                    errores += 1
-                    logger.error(f"Error insertando: {e}")
+                    errors += 1
+                    logger.error(f"Error inserting: {e}")
 
-        # Logging DESPUÉS del for (misma indentación que el for)
+        # Logging AFTER the loop
         logger.info(
-            f"✅ Insertados: {insertados} | Duplicados: {duplicados} | Errores: {errores}"
+            f"✅ Inserted: {inserted} | Duplicates: {duplicates} | Errors: {errors}"
         )
 
-        return {"insertados": insertados, "duplicados": duplicados, "errores": errores}
+        return {"insertados": inserted, "duplicados": duplicates, "errores": errors}
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(SCRIPT_DIR)
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 
-# Cerciorarse de que el directorio de salida existe
+# Ensure output directory exists
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-csv_tiempo_real = os.path.join(OUTPUT_DIR, "clientes_afectados_tiempo_real.csv")
-csv_historico = os.path.join(OUTPUT_DIR, "clientes_afectados_historico.csv")
+csv_near_real_time = os.path.join(OUTPUT_DIR, "affected_customers_near_real_time.csv")
+csv_historical = os.path.join(OUTPUT_DIR, "affected_customers_historical.csv")
 
 
-def save_data_csv(registros):
+def save_data_csv(records):
     """Saves processed records to local CSV files.
 
     Manages two files: one historical (incremental without duplicates) and
-    uno de tiempo real (sobrescritura del estado actual).
+    one near-real-time (overwrites the current state).
 
     Args:
-        registros (list): Lista de diccionarios procesados por el transformer.
+        records (list): List of dictionaries processed by the transformer.
     """
-    if registros:
-        df_new = pd.DataFrame(registros)
+    if records:
+        df_new = pd.DataFrame(records)
 
-        # Guardar en histórico
-        if os.path.exists(csv_historico):
-            df_hist = pd.read_csv(csv_historico, encoding="utf-8-sig")
+        # Save to historical
+        if os.path.exists(csv_historical):
+            df_hist = pd.read_csv(csv_historical, encoding="utf-8-sig")
             df_hist = pd.concat([df_hist, df_new], ignore_index=True)
             df_hist = df_hist.drop_duplicates(subset=["ID_UNICO", "TIMESTAMP"])
         else:
             df_hist = df_new
             print(
-                f"✅ Datos guardados en:\n📌 {csv_historico} (Histórico)\n📌 {csv_tiempo_real} (Tiempo Real)"
+                f"✅ Data saved to:\n📌 {csv_historical} (Historical)\n📌 {csv_near_real_time} (Near-Real-Time)"
             )
 
-        df_hist.to_csv(csv_historico, index=False, encoding="utf-8-sig")
+        df_hist.to_csv(csv_historical, index=False, encoding="utf-8-sig")
 
-        # Guardar en tiempo real (sobrescribe)
-        df_new.to_csv(csv_tiempo_real, index=False, encoding="utf-8-sig")
+        # Save to near-real-time (overwrite)
+        df_new.to_csv(csv_near_real_time, index=False, encoding="utf-8-sig")
 
         print(
-            f"✅ Datos guardados en:\n📌 {csv_historico} (Histórico)\n📌 {csv_tiempo_real} (Tiempo Real)"
+            f"✅ Data saved to:\n📌 {csv_historical} (Historical)\n📌 {csv_near_real_time} (Near-Real-Time)"
         )
 
 

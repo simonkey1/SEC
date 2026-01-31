@@ -1,61 +1,61 @@
-# Manifesto del Producto de Datos: "Estado de la Red"
+# Data Product Manifesto: "Grid Status"
 
-## 1. La Narrativa Central (Hipótesis Validada)
-> *"La inversión en transmisión es efectiva, pero no es mágica. Su éxito depende de la geografía (Clima) y la maturacion temporal (Lag)."*
+## 1. Core Narrative (Validated Hypothesis)
+> *"Investment in transmission is effective, but it is not magic. Its success depends on geography (Climate) and temporal maturation (Lag)."*
 
-Hemos pasado de "La inversión no sirve" (Correlación -0.14) a una visión matizada probada por 4 casos de estudio:
-1.  **Éxito Inmediato**: Proyectos quirúrgicos (Arica/Santiago) bajan cortes al instante (-70%).
-2.  **Éxito Tardío (Lag)**: Grandes carreteras (Cardones-Polpaico) tardan 3 años en estabilizar el sistema (-17%).
-3.  **Desafío Estructural**: En el Sur (Los Lagos), el clima extremo anula las mejoras de inversión (+4%).
-
----
-
-## 2. Visualizaciones Seleccionadas ("The Keepers")
-Estas son las 5 visualizaciones que pasarán al Frontend, y por qué:
-
-### A. El Mapa de Calor "Social ROI" (Ineficiencia)
-*   **Fuente**: `social_roi_analysis.py`
-*   **Por qué**: Es la métrica de negocio definitiva. Muestra que **Ñuble** es un "Hoyo Negro" (55k afectados/M$ invertido) vs **Antofagasta** (230 afectados/M$).
-*   **Mejora**: Se agregaron tooltips explicando el "Lag" (Proyectos 2027) para no ser injustos.
-
-### B. La Galería de Desastres (Time-Series)
-*   **Fuente**: `batch_visualize_events.py` (Mega View)
-*   **Por qué**: Permite auditoría evento por evento. Muestra la "firma" de cada tormenta (recuperación rápida vs lenta).
-*   **Uso**: Drill-down para ingenieros/auditores.
-
-### C. El Ranking de la Vergüenza (Empresas)
-*   **Fuente**: `company_ranking_analysis.py`
-*   **Por qué**: Separa el volumen (CGE) de la severidad (Chilquinta). Es transparencia pura para el usuario final.
-
-### D. El Monitor en Tiempo Real (Zapping)
-*   **Fuente**: `time_series_zapping.py`
-*   **Por qué**: Muestra el pulso "minuto a minuto". Es esencial para ver la estabilidad diaria.
-
-### E. La Evidencia de Inversión (Antes/Después)
-*   **Fuente**: `validate_improvement.py`
-*   **Por qué**: Muestra gráficamente el impacto de los 4 grandes proyectos (Barras Antes vs Después). Es la prueba de que el sistema avanza.
+We have moved from "Investment doesn't work" (Correlation -0.14) to a nuanced view proven by 4 case studies:
+1.  **Immediate Success**: Surgical projects (Arica/Santiago) lower outages instantly (-70%).
+2.  **Late Success (Lag)**: Massive highways (Cardones-Polpaico) take 3 years to stabilize the system (-17%).
+3.  **Structural Challenge**: In the South (Los Lagos), extreme weather negates investment improvements (+4%).
 
 ---
 
-## 3. Metodología de Métricas
-¿Usamos estándares internacionales? **Sí, adaptados.**
+## 2. Selected Visualizations ("The Keepers")
+These are the 5 visualizations that will move to the Frontend, and why:
 
-*   **SAIFI Proxy (Frecuencia)**: Usamos `total_eventos / total_clientes`.
-    *   *Ajuste*: Filtramos micro-cortes (<1 min) para limpiar ruido.
-*   **SAIDI Proxy (Duración)**: Usamos `clientes_afectados * horas_corte`.
-    *   *Ponderación*: No tratamos igual un corte en una zona densa que en una rural. El "Market Map" normaliza esto por densidad poblacional.
-*   **Social ROI (Propia)**: `Clientes Afectados / Inversión MMU$`.
-    *   *Innovación*: Métrica única de este proyecto para medir eficiencia de gasto público.
+### A. The "Social ROI" Heatmap (Inefficiency)
+*   **Source**: `social_roi_analysis.py`
+*   **Why**: It is the definitive business metric. It shows that **Ñuble** is a "Black Hole" (55k affected/$M invested) vs **Antofagasta** (230 affected/$M).
+*   **Improvement**: Tooltips explaining the "Lag" (2027 projects) were added to avoid being unfair.
+
+### B. The Disaster Gallery (Time-Series)
+*   **Source**: `batch_visualize_events.py` (Mega View)
+*   **Why**: Allows event-by-event auditing. Shows the "signature" of each storm (fast vs. slow recovery).
+*   **Usage**: Drill-down for engineers/auditors.
+
+### C. The Ranking of Shame (Companies)
+*   **Source**: `company_ranking_analysis.py`
+*   **Why**: Separates volume (CGE) from severity (Chilquinta). It is pure transparency for the end user.
+
+### D. The Near-Real-Time Monitor (Zapping)
+*   **Source**: `time_series_zapping.py`
+*   **Why**: Shows the "minute-to-minute" pulse. It is essential to see daily stability.
+
+### E. Investment Evidence (Before/After)
+*   **Source**: `validate_improvement.py`
+*   **Why**: Graphically shows the impact of the 4 major projects (Before vs. After Bars). It is proof that the system is advancing.
 
 ---
 
-## 4. Estado Actual (Status Check)
-| Capa | Estado | Conclusión |
+## 3. Metrics Methodology
+Do we use international standards? **Yes, adapted.**
+
+*   **SAIFI Proxy (Frequency)**: We use `total_events / total_customers`.
+    *   *Adjustment*: We filter micro-outages (<1 min) to clean noise.
+*   **SAIDI Proxy (Duration)**: We use `affected_customers * outage_hours`.
+    *   *Weighting*: We don't treat an outage in a dense area the same as in a rural one. The "Market Map" normalizes this by population density.
+*   **Social ROI (Proprietary)**: `Affected Customers / Investment MMU$`.
+    *   *Innovation*: Unique metric of this project to measure public spending efficiency.
+
+---
+
+## 4. Current Status (Status Check)
+| Layer | Status | Conclusion |
 | :--- | :--- | :--- |
-| **Ingesta (Raw)** | ✅ Completado | 6.2M registros, limpio de ceros falsos. |
-| **Contexto** | ✅ Completado | Hitos climáticos y fechas de inauguración validadas. |
-| **Análisis** | ✅ Completado | Hipótesis de "Lag" confirmada estadísticamente. |
-| **Backend** | ⏸️ Pendiente | Scripts listos, esperando luz verde para `sync_dashboard_data.py`. |
-| **Frontend** | ⏳ En espera | Diseño definido por las visualizaciones "Keepers". |
+| **Ingestion (Raw)** | ✅ Completed | 6.2M records, clean of false zeros. |
+| **Context** | ✅ Completed | Climate milestones and inauguration dates validated. |
+| **Analysis** | ✅ Completed | "Lag" hypothesis statistically confirmed. |
+| **Backend** | ⏸️ Pending | Scripts ready, waiting for green light for `sync_dashboard_data.py`. |
+| **Frontend** | ⏳ In progress | Design defined by "Keepers" visualizations. |
 
-Estamos listos para construir. No falta ningún dato.
+We are ready to build. No data is missing.

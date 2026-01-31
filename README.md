@@ -6,7 +6,7 @@ author: "Simon Gomez"
 
 ## 📌 Project Overview: From Monitoring to Research
 
-This project has evolved from a real-time monitoring system into a **high-performance research data pipeline**. The current focus is the large-scale analysis of electrical service reliability in Chile between **2017 and 2025**, correlating service interruptions with infrastructure investment data.
+This project has evolved from a near-real-time monitoring system into a **high-performance research data pipeline**. The current focus is the large-scale analysis of electrical service reliability in Chile between **2017 and 2025**, correlating service interruptions with infrastructure investment data.
 
 ### 🎯 Key Research Goal
 **"Does investment in electrical infrastructure significantly reduce the frequency and duration of service interruptions?"**
@@ -67,11 +67,11 @@ Coordinates the scraping and loading process.
 
 ---
 
-## 📂 Legacy: Real-Time Monitoring
+## 📂 Legacy: Near-Real-Time Monitoring
 
-While the project has pivoted to historical research, the real-time monitoring components remain available in the codebase for reference or specialized use:
+While the project has pivoted to historical research, the near-real-time monitoring components remain available in the codebase for reference or specialized use:
 
--   **[scripts/legacy/end.py](scripts/legacy/end.py)**: The original real-time orchestrator.
+-   **[scripts/legacy/end.py](scripts/legacy/end.py)**: The original near-real-time orchestrator.
 -   **Alert System**: Email notifications and health checks for continuous monitoring.
 
 ---

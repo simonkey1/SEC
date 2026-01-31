@@ -1,159 +1,159 @@
-# Efectividad de la Inversión en Infraestructura Eléctrica: Una Lectura Sociotécnica del Sistema Chileno (2017-2025)
+# Effectiveness of Electrical Infrastructure Investment: A Sociotechnical Reading of the Chilean System (2017-2025)
 
-**Autor**: Análisis de Datos SEC Chile  
-**Fecha**: Enero 2026  
-**Enfoque**: *Descripción Densa*, Métodos Mixtos y Justicia Energética
-
----
-
-## Introducción
-
-La modernización de la infraestructura eléctrica en Chile ha sido una de las prioridades estratégicas de la última década, movilizando inversiones superiores a los US$ 10.000 millones bajo la promesa de un suministro robusto y confiable. Sin embargo, la percepción ciudadana y los eventos climáticos recientes sugieren una persistente fragilidad en el sistema. Este documento explora dicha contradicción, no desde la asepsia de los indicadores técnicos tradicionales, sino a partir de una lectura sociotécnica que integra el dato duro con la realidad territorial.
-
-**Adelanto de Resultados**: El análisis de 6.2 millones de registros de interrupciones revela que, si bien la inversión macroestructural (Transmisión) ha reducido los tiempos de reposición en zonas específicas como el norte grande (Caso REDENOR), existe un "desacople temporal" significativo: las mejoras tardan hasta tres años en materializarse en la calidad percibida por el usuario. Más crítico aún, se detecta una profunda desigualdad territorial donde regiones como La Araucanía permanecen estancadas en indicadores de falla crónicos, evidenciando que la inversión financiera por sí sola choca contra barreras ambientales y sociales no resueltas.
-
-**Estructura del Documento**: A continuación, se presentan los **Antecedentes y Marco Teórico** (Sección 1), donde se establece el lente de Justicia Energética y Resiliencia para interpretar los datos. La **Metodología** (Sección 2) detalla el procesamiento de la data cruda y la selección de casos. La sección central, **Narrativas de la Red** (Sección 3), expone los resultados empíricos a través de cuatro estudios de caso paradigmáticos. Finalmente, la **Discusión** (Sección 4) y **Conclusión** (Sección 5) sintetizan las implicancias de política pública, cuestionando si nuestros estándares regulatorios actuales son suficientes para el nuevo escenario climático.
+**Author**: SEC Chile Data Analysis  
+**Date**: January 2026  
+**Focus**: *Thick Description*, Mixed Methods, and Energy Justice
 
 ---
 
-## 1. Antecedentes y Marco Teórico
+## Introduction
 
-### 1.1 Marco Teórico: De la Confiabilidad a la Justicia Energética
-Para analizar la fricción entre la modernidad prometida por la inversión y la realidad vivida por el usuario, este estudio trasciende la ingeniería tradicional para adoptar marcos teóricos contemporáneos que vinculan la técnica con lo social. En primer lugar, se utiliza el **Ciclo de Resiliencia de Infraestructura** propuesto por Hollnagel (2014), el cual sugiere que ante la volatilidad climática del Antropoceno, el paradigma debe desplazarse desde la simple "Confiabilidad" —entendida como la minimización de fallas— hacia la **Resiliencia**. Esta se define como la capacidad no solo de absorber y recuperar el sistema tras un evento, sino crucialmente de *Adaptar* su funcionamiento ante amenazas de Alto Impacto y Baja Frecuencia (*HILF Events*). La pertinencia de este enfoque se manifiesta en el "lag" de adaptación observado en obras estructurales, sugiriendo que la ingeniería chilena ha sido eficiente en resistencia pero lenta en adaptación evolutiva.
+The modernization of electrical infrastructure in Chile has been one of the strategic priorities of the last decade, mobilizing investments exceeding US$ 10 billion under the promise of a robust and reliable supply. However, public perception and recent climate events suggest a persistent fragility in the system. This document explores this contradiction, not from the ascesis of traditional technical indicators, but through a sociotechnical lens that integrates hard data with territorial reality.
 
-Complementariamente, se integra el marco de **Justicia Energética** de Sovacool y Dworkin (2015), enfocándose específicamente en las dimensiones de Justicia Distributiva y de Reconocimiento. La teoría postula que las métricas técnicas no son neutrales; la exclusión regulatoria de los "Eventos Mayores" del cálculo oficial de calidad (SAIFI) constituye una falla de reconocimiento, donde la experiencia de vulnerabilidad de las comunidades rurales o expuestas al clima es sistemáticamente borrada del registro administrativo. Al ignorar estos datos en la evaluación de desempeño, el regulador construye una realidad paralela que deslegitima la queja ciudadana, fracturando el contrato social del servicio público.
+**Preview of Results**: The analysis of 6.2 million interruption records reveals that while macro-structural investment (Transmission) has reduced restoration times in specific areas such as the "Norte Grande" (REDENOR Case), there is a significant "temporal decoupling": improvements take up to three years to materialize in user-perceived quality. Even more critical, a deep territorial inequality is detected where regions like La Araucanía remain stagnant in chronic failure indicators, evidencing that financial investment alone clashes against unresolved environmental and social barriers.
 
-### 1.2 Antecedentes Empíricos Internacionales
-La literatura internacional ofrece precedentes robustos que validan la tensión entre flujos de capital e indicadores de calidad. Investigaciones de OLADE (2022) en ocho países latinoamericanos han demostrado cuantitativamente que el aumento en la remuneración tarifaria (VAD) correlaciona positivamente con mejoras en los índices SAIDI, pero con un desfase temporal (*lag*) estructural de entre uno y dos años. Este hallazgo proporciona un marco de referencia crítico para evaluar el caso chileno: la detección de tiempos de maduración de tres años en proyectos como Cardones-Polpaico indica una fricción institucional y técnica superior al promedio regional, que requiere explicación más allá de la mera construcción física.
-
-Por otro lado, estudios sobre pobreza energética en el Caribe (Garrick et al., 2020) revelan que la inversión privada, si bien reduce los promedios nacionales de interrupción hasta en un 45%, tiende a concentrar sus beneficios en zonas urbanas densas y rentables. Este fenómeno de segregación de la calidad del servicio ofrece un espejo para interpretar la realidad chilena, ayudando a explicar por qué regiones con alta ruralidad o conflicto territorial, como La Araucanía, permanecen estancadas en sus niveles de confiabilidad a pesar de los montos generales de inversión transados en el mercado.
-
-### 1.3 Planteamiento del Problema Nacional
-Chile enfrenta actualmente una marcada "disonancia cognitiva" en su sector eléctrico: la coexistencia de una inversión histórica superior a los US$10.000 millones en la última década con una percepción ciudadana de fragilidad extrema, cristalizada tras el colapso de agosto de 2024. A la luz de los marcos de Resiliencia y Justicia Energética, esta contradicción no puede explicarse solo por la severidad del clima, sino por la rigidez de un diseño regulatorio (IEEE 1366) que, al depurar la estadística de fallas, optimiza la red para el cumplimiento normativo en lugar de prepararla para la supervivencia ante la crisis climática.
-
-### 1.4 Propósito y Objetivos de la Investigación
-
-Para esta investigación, se han definido los siguientes elementos estructurales:
-*   **Objeto de Estudio**: La calidad del suministro eléctrico residencial en relación con la inversión en infraestructura de transmisión.
-*   **Concepto Central**: *Disonancia Sociotécnica* (la brecha entre la modernización tecnológica y la experiencia de vulnerabilidad del usuario).
-*   **Delimitación**: Sistema Eléctrico Nacional de Chile, período 2017-2025.
-
-**Pregunta de Investigación**:
-¿Cómo se manifiesta la **disonancia sociotécnica** en la relación entre los flujos de inversión en infraestructura de transmisión y la continuidad del suministro eléctrico percibida por los usuarios en Chile (2017-2025)?
-
-**Objetivo General**:
-**Explorar** cómo se manifiesta la **disonancia sociotécnica** en la relación entre los flujos de inversión en infraestructura de transmisión y la continuidad del suministro eléctrico percibida por los usuarios en Chile (2017-2025).
-
-**Objetivos Específicos**:
-1.  **Describir** la brecha cuantitativa entre los indicadores oficiales (SAIFI regulado) y la data cruda de interrupciones (*Raw Data*), para dimensionar la realidad operativa no reconocida por la normativa.
-2.  **Identificar** patrones de desconexión territorial en zonas de alta inversión (cobertura) pero baja resiliencia (continuidad), utilizando estudios de caso en el norte, centro y sur del país.
-3.  **Interpretar** dicha disonancia a la luz de los principios de Justicia Energética, para proponer nuevas categorías de análisis que integren la variable climática y social en la evaluación de proyectos.
+**Document Structure**: Next, we present the **Background and Theoretical Framework** (Section 1), establishing the lens of Energy Justice and Resilience to interpret the data. The **Methodology** (Section 2) details the processing of raw data and case selection. The central section, **Grid Narratives** (Section 3), exposes empirical results through four paradigmatic case studies. Finally, the **Discussion** (Section 4) and **Conclusion** (Section 5) synthesize public policy implications, questioning whether our current regulatory standards are sufficient for the new climate scenario.
 
 ---
 
-## 2. Metodología: Escuchando al Dato Crudo
+## 1. Background and Theoretical Framework
 
-Para superar la "higiene estadística", adoptamos un diseño de **Estudio de Caso Múltiple** con enfoque de **Métodos Mixtos**. En primer lugar, realizamos un análisis cuantitativo exploratorio del *Raw SAIFI* —el dato sucio, con ruido y clima—, porque es ahí donde reside la verdad del usuario.
+### 1.1 Theoretical Framework: From Reliability to Energy Justice
+To analyze the friction between the modernity promised by investment and the reality lived by the user, this study transcends traditional engineering to adopt contemporary theoretical frameworks linking technique with the social. First, we use the **Infrastructure Resilience Cycle** proposed by Hollnagel (2014), which suggests that in the face of Anthropocene climate volatility, the paradigm must shift from simple "Reliability" —understood as failure minimization— toward **Resilience**. This is defined as the capacity not only to absorb and recover the system after an event but crucially to *Adapt* its functioning to High-Impact Low-Frequency (*HILF Events*) threats. The relevance of this approach is manifest in the adaptation "lag" observed in structural works, suggesting that Chilean engineering has been efficient in resistance but slow in evolutionary adaptation.
+
+Complementarily, the **Energy Justice** framework by Sovacool and Dworkin (2015) is integrated, specifically focusing on the dimensions of Distributive Justice and Justice of Recognition. The theory postulates that technical metrics are not neutral; the regulatory exclusion of "Major Events" from the official quality calculation (SAIFI) constitutes a failure of recognition, where the experience of vulnerability in rural or climate-exposed communities is systematically erased from the administrative record. By ignoring these data in performance evaluation, the regulator constructs a parallel reality that delegitimizes citizen complaints, fracturing the social contract of public service.
+
+### 1.2 International Empirical Background
+International literature offers robust precedents validating the tension between capital flows and quality indicators. Investigations by OLADE (2022) in eight Latin American countries have quantitatively demonstrated that an increase in tariff remuneration (VAD) correlates positively with improvements in SAIDI indices, but with a structural temporal lag of between one and two years. This finding provides a critical reference framework for evaluating the Chilean case: detecting maturation times of three years in projects like Cardones-Polpaico indicates institutional and technical friction exceeding the regional average, requiring explanation beyond mere physical construction.
+
+On the other hand, studies on energy poverty in the Caribbean (Garrick et al., 2020) reveal that private investment, while reducing national interruption averages by up to 45%, tends to concentrate its benefits in dense and profitable urban areas. This phenomenon of quality-of-service segregation offers a mirror to interpret Chilean reality, helping to explain why regions with high rurality or territorial conflict, such as La Araucanía, remain stagnant in their reliability levels despite the general investment amounts traded in the market.
+
+### 1.3 National Problem Statement
+Chile currently faces a marked "cognitive dissonance" in its electrical sector: the coexistence of historical investment exceeding US$ 10 billion in the last decade with a public perception of extreme fragility, crystallized after the collapse of August 2024. In light of the Resilience and Energy Justice frameworks, this contradiction cannot be explained only by climate severity, but by the rigidity of a regulatory design (IEEE 1366) that, by purging failure statistics, optimizes the grid for regulatory compliance instead of preparing it for survival in the face of the climate crisis.
+
+### 1.4 Purpose and Research Objectives
+
+For this research, the following structural elements have been defined:
+*   **Object of Study**: Residential electricity supply quality in relation to transmission infrastructure investment.
+*   **Core Concept**: *Sociotechnical Dissonance* (the gap between technological modernization and user vulnerability experience).
+*   **Delimitation**: National Electrical System of Chile, period 2017-2025.
+
+**Research Question**:
+How does **sociotechnical dissonance** manifest in the relationship between transmission infrastructure investment flows and user-perceived continuity of electricity supply in Chile (2017-2025)?
+
+**General Objective**:
+**Explore** how **sociotechnical dissonance** manifests in the relationship between transmission infrastructure investment flows and user-perceived continuity of electricity supply in Chile (2017-2025).
+
+**Specific Objectives**:
+1.  **Describe** the quantitative gap between official indicators (regulated SAIFI) and raw interruption data (*Raw Data*), to dimension the operational reality unrecognized by regulations.
+2.  **Identify** territorial disconnection patterns in areas of high investment (coverage) but low resilience (continuity), using case studies in the north, center, and south of the country.
+3.  **Interpret** this dissonance in light of Energy Justice principles, to propose new categories of analysis that integrate climate and social variables in project evaluation.
+
+---
+
+## 2. Methodology: Listening to Raw Data
+
+To overcome "statistical hygiene," we adopt a **Multiple Case Study** design with a **Mixed Methods** approach. First, we perform an exploratory quantitative analysis of *Raw SAIFI* —the dirty data, with noise and weather— because that is where the user's truth resides.
 
 > [!TIP]
-> **Caja de Conceptos: ¿Qué medimos cuando medimos cortes?**
+> **Concept Box: What do we measure when we measure outages?**
 >
-> *   **SAIFI Oficial**: Depura los "Eventos de Fuerza Mayor" (climáticos). Es como medir la fiebre de un paciente ignorando los días que tuvo gripe. *Valor promedio histórico: ~3.5 - 4.5 interrupciones/año.*
-> *   **Raw SAIFI (Nuestro Indicador)**: Considera *todas* las interrupciones, sin excepción.
->     $$ \text{Raw SAIFI} = \frac{\sum \text{Clientes Afectados (Total)}}{\text{Total Clientes (~6.5M)}} $$
->     *Valores estimados en nuestro dataset:* 2017 (**~16.2**), 2024 (Pico por viento). **La brecha es de casi 4x.**
+> *   **Official SAIFI**: Purges "Force Majeure Events" (weather). It's like measuring a patient's fever ignoring the days they had the flu. *Historical average value: ~3.5 - 4.5 interruptions/year.*
+> *   **Raw SAIFI (Our Indicator)**: Considers *all* interruptions, without exception.
+>     $$ \text{Raw SAIFI} = \frac{\sum \text{Affected Customers (Total)}}{\text{Total Customers (~6.5M)}} $$
+>     *Estimated values in our dataset:* 2017 (**~16.2**), 2024 (Peak due to wind). **The gap is almost 4x.**
 
-![Figura 1: Series de Tiempo Globales](figures/figura1_timeseries.png)
-*Figura 1: Evolución temporal de interrupciones y eventos clave (Fuente: Elaboración propia)*
+![Figure 1: Global Time Series](figures/figura1_timeseries.png)
+*Figure 1: Temporal evolution of interruptions and key events (Source: Own elaboration)*
 
-**Interpretación de la Figura 1**: La serie de tiempo revela picos que coinciden con eventos climáticos o sociales. Destaca el pico inicial de **"Nevazón Julio 2017"**, un evento que paralizó Santiago y que en nuestra data cruda aparece con magnitud similar a eventos posteriores, aunque administrativamente fue "perdonado".
+**Interpretation of Figure 1**: The time series reveals peaks that coincide with climate or social events. The initial peak of **"Snowfall July 2017"** stands out, an event that paralyzed Santiago and appears in our raw data with a magnitude similar to subsequent events, although administratively it was "pardoned."
 
 > [!NOTE]
-> **Disclaimer Metodológico**: Dado el carácter exploratorio de este estudio, el concepto de *Descripción Densa* (Geertz) se aplica aquí como una herramienta de interpretación de "trazos digitales" y contextos territoriales, y no como una etnografía de campo tradicional con entrevistas. Buscamos "densificar" el dato numérico cruzándolo con narrativas locales y eventos climáticos. (Ver Anexo A).
+> **Methodological Disclaimer**: Given the exploratory nature of this study, the concept of *Thick Description* (Geertz) is applied here as a tool for interpreting "digital traces" and territorial contexts, and not as a traditional field ethnography with interviews. We seek to "densify" the numerical data by cross-referencing it with local narratives and climate events. (See Annex A).
 
-En segundo lugar, seleccionamos cuatro estudios de caso no por su monto, sino por su potencial narrativo. Cada caso (Desierto, Valle, Urbe, Bosque) cuenta una historia distinta de adaptación o fracaso.
+Secondly, we selected four case studies not for their amount, but for their narrative potential. Each case (Desert, Valley, City, Forest) tells a different story of adaptation or failure.
 
-![Figura 2: Mapa de Calor Geográfico](figures/figura2_heatmap.png)
-*Figura 2: Concentración geográfica de eventos (Fuente: Elaboración propia)*
-
----
-
-## 3. Narrativas de la Red (Resultados)
-
-### 3.1 La Paradoja de Coquimbo (El Gigante Dormido)
-La línea Cardones-Polpaico (500 kV) fue celebrada como la columna vertebral energética de Chile. Sin embargo, durante tres años (2019-2021), los habitantes de Coquimbo vivieron una paradoja.
-
-![Figura 3: Caso Coquimbo](figures/figura3_coquimbo.png)
-*Figura 3: Persistencia de fallas en Coquimbo post-interconexión (Fuente: Elaboración propia)*
-
-**Interpretación de la Figura 3**: El gráfico muestra la evolución diaria de clientes afectados (eje Y) a lo largo del tiempo (eje X). La **línea azul** representa la cantidad de hogares sin luz, y la línea más gruesa suaviza esta tendencia (media móvil). La **franja amarilla** marca el periodo de entrada en operación de la mega-obra Cardones-Polpaico.
-Lo contraintuitivo es que **la curva no se aplana** tras la franja amarilla. Por el contrario, observamos que los picos de falla persisten con la misma intensidad. Esto demuestra empíricamente el *lag* de tres años: la "macro-eficiencia" de la transmisión tardó años en permear hacia la "micro-resiliencia" de la red de distribución local.
-
-### 3.2 La Cirugía del Desierto (REDENOR)
-En Arica, el caso es opuesto. La inversión en REDENOR actuó como una intervención quirúrgica efectiva.
-
-![Figura 4: Caso Arica](figures/figura4_arica.png)
-*Figura 4: Impacto de la redondancia en Arica (Fuente: Elaboración propia)*
-
-**Interpretación de la Figura 4**: Este gráfico de barras compara el volumen total de afectación año a año. Se observa un **quiebre estructural** claro: las barras altas de los años previos a la inversión colapsan a niveles mínimos tras el cierre del anillo de transmisión (2020). Aquí la redundancia técnica sí eliminó la vulnerabilidad, validando la tesis de que en topologías simples (desierto), la inversión física tiene un retorno inmediato.
-
-### 3.3 La Furia del Sur (Pichirropulli)
-En la región de Los Lagos, la inversión chocó contra un muro verde. A pesar de los refuerzos en subestaciones como Pichirropulli, los índices de falla en zonas forestales apenas mejoraron.
-
-![Figura 5: Ranking Empresas](figures/figura5_companies.png)
-*Figura 5: Empresas con mayor afectación de clientes (Fuente: Elaboración propia)*
-
-**El Factor Vegetación**: Como se observa en el ranking (Figura 5), las empresas con mayor afectación operan en zonas de alta densidad forestal. La normativa chilena (Norma Técnica de Calidad de Servicio, CNE, 2020) establece franjas de seguridad estrictas, pero la realidad territorial muestra una fricción constante entre el tendido eléctrico y las plantaciones forestales exóticas. La caída de árboles sobre líneas sigue siendo la causa principal de fallas masivas en el sur, sugiriendo que "el problema no es el cable, es el árbol" (y la planificación territorial que permite su coexistencia).
-
-### 3.4 El Gap de la Percepción: Una Cuestión de Justicia
-Finalmente, al observar la tendencia nacional:
-
-![Figura 1: Series de Tiempo Globales](figures/figura1_timeseries.png)
-*Figura 1: Evolución temporal de interrupciones y eventos clave (Fuente: Elaboración propia)*
-
-**Interpretación de la Figura 1**: La serie de tiempo revela picos que coinciden con eventos climáticos o sociales, no con fallas técnicas aisladas. La brecha entre el *SAIFI Oficial* (~4 cortes) y el *SAIFI Real* visible en estos picos (~12 cortes) constituye una **falla de reconocimiento** (Sovacool, 2015). Cuando la autoridad depura estos "eventos de fuerza mayor", está borrando estadísticamente la experiencia de vulnerabilidad de la ciudadanía.
+![Figure 2: Geographic Heatmap](figures/figura2_heatmap.png)
+*Figure 2: Geographic concentration of events (Source: Own elaboration)*
 
 ---
 
-## 4. Discusión: Hacia una Ecología de la Infraestructura
+## 3. Grid Narratives (Results)
 
-Los hallazgos nos obligan a replantear la relación infraestructura-sociedad bajo el lente del **Ciclo de Resiliencia**. No estamos ante un problema meramente técnico de "poner más cables". Estamos ante una crisis de la fase de **Adaptación**.
+### 3.1 The Coquimbo Paradox (The Sleeping Giant)
+The Cardones-Polpaico line (500 kV) was celebrated as Chile's energy backbone. However, for three years (2019-2021), the inhabitants of Coquimbo lived a paradox.
 
-La estrategia actual ha sido "robustecer" (postes más gruesos). Pero ante eventos como los vientos de 124 km/h de 2024, la resistencia bruta es fútil. ¿Deberíamos movernos hacia una red "antifrágil" (Taleb), descentralizada y capaz de fallar "graciosamente" en lugar de colapsar catastróficamente?
+![Figure 3: Coquimbo Case](figures/figura3_coquimbo.png)
+*Figure 3: Persistence of failures in Coquimbo post-interconnection (Source: Own elaboration)*
 
-Asimismo, la obsesión con la transmisión (Alta Tensión) ha dejado huérfana a la distribución (Baja Tensión). ¿Está dispuesta la sociedad chilena a pagar la tarifa necesaria para soterrar las ciudades, o aceptamos la vulnerabilidad como el precio de una energía barata?
+**Interpretation of Figure 3**: The graph shows the daily evolution of affected customers (Y-axis) over time (X-axis). The **blue line** represents the number of households without power, and the thicker line smooths this trend (moving average). The **yellow strip** marks the period when the Cardones-Polpaico mega-project entered operation.
+Counterintuitively, **the curve does not flatten** after the yellow strip. On the contrary, we observe that failure peaks persist with the same intensity. This empirically demonstrates the three-year *lag*: the "macro-efficiency" of transmission took years to permeate toward the "micro-resilience" of the local distribution network.
+
+### 3.2 Desert Surgery (REDENOR)
+In Arica, the case is opposite. Investment in REDENOR acted as an effective surgical intervention.
+
+![Figure 4: Arica Case](figures/figura4_arica.png)
+*Figure 4: Impact of redundancy in Arica (Source: Own elaboration)*
+
+**Interpretation of Figure 4**: This bar chart compares total affectation volume year by year. A clear **structural break** is observed: the tall bars of the years preceding the investment collapse to minimum levels after the transmission ring closure (2020). Here, technical redundancy did eliminate vulnerability, validating the thesis that in simple topologies (desert), physical investment has an immediate return.
+
+### 3.3 Southern Fury (Pichirropulli)
+In the Los Lagos region, investment hit a green wall. Despite reinforcements in substations such as Pichirropulli, failure indices in forest areas barely improved.
+
+![Figure 5: Company Ranking](figures/figura5_companies.png)
+*Figure 5: Companies with highest customer affectation (Source: Own elaboration)*
+
+**The Vegetation Factor**: As seen in the ranking (Figure 5), companies with the highest affectation operate in high forest density areas. Chilean regulations (Technical Standard for Service Quality, CNE, 2020) establish strict safety strips, but territorial reality shows constant friction between power lines and exotic forest plantations. Trees falling on lines remain the main cause of massive failures in the south, suggesting that "the problem is not the cable, it's the tree" (and the territorial planning that allows their coexistence).
+
+### 3.4 The Perception Gap: A Matter of Justice
+Finally, looking at the national trend:
+
+![Figure 1: Global Time Series](figures/figura1_timeseries.png)
+*Figure 1: Temporal evolution of interruptions and key events (Source: Own elaboration)*
+
+**Interpretation of Figure 1**: The time series reveals peaks that coincide with climate or social events, not with isolated technical failures. The gap between *Official SAIFI* (~4 outages) and *Real SAIFI* visible in these peaks (~12 outages) constitutes a **failure of recognition** (Sovacool, 2015). When the authority purges these "force majeure events," it is statistically erasing the public's vulnerability experience.
 
 ---
 
-## 5. Conclusión Abierta
+## 4. Discussion: Toward an Infrastructure Ecology
 
-La inversión en infraestructura eléctrica en Chile ha sido exitosa en su misión de **integrar mercados**, pero incompleta en su promesa de **garantizar justicia distributiva**. El *lag* detectado no es solo tiempo: es la fricción institucional de un país que cambia más rápido que sus leyes.
+The findings force us to rethink the infrastructure-society relationship through the lens of the **Resilience Cycle**. We are not facing a merely technical problem of "putting in more cables." We are facing a crisis of the **Adaptation** phase.
 
-Queda abierta la interrogante para el lector y el regulador: En un Antropoceno marcado por la volatilidad climática, **¿seguiremos diseñando redes para un clima que ya no existe, basándonos en estadísticas que borran los eventos que más nos importan?**
+The current strategy has been "robustening" (thicker poles). But in the face of 124 km/h winds in 2024, raw resistance is futile. Should we move toward an "antifragile" network (Taleb), decentralized and capable of failing "gracefully" instead of collapsing catastrophically?
 
-El dato nos dice *qué* pasó. La respuesta sobre *qué hacer* no está en el Excel, sino en el pacto social que decidamos construir.
+Likewise, the obsession with transmission (High Voltage) has left distribution (Low Voltage) orphaned. Is Chilean society willing to pay the necessary tariff to underground cities, or do we accept vulnerability as the price of cheap energy?
 
 ---
 
-## 6. Referencias Seleccionadas
+## 5. Open Conclusion
+
+Investment in electrical infrastructure in Chile has been successful in its mission to **integrate markets**, but incomplete in its promise to **guarantee distributive justice**. The detected *lag* is not just time: it is the institutional friction of a country changing faster than its laws.
+
+The question remains open for the reader and the regulator: In an Anthropocene marked by climate volatility, **will we continue designing networks for a climate that no longer exists, based on statistics that erase the events that matter most to us?**
+
+The data tells us *what* happened. The answer about *what to do* is not in Excel, but in the social pact we decide to build.
+
+---
+
+## 6. Selected References
 *   Geertz, C. (1973). *The Interpretation of Cultures*.
 *   Hollnagel, E. (2014). *Resilience Engineering in Practice*.
 *   Sovacool, B. & Dworkin, M. (2015). *Energy Justice: Conceptual Insights*.
-*   OLADE (2022). *Informe de Calidad de Servicio Eléctrico en LatAm*.
+*   OLADE (2022). *Report on Electricity Service Quality in LatAm*.
 
 ---
 
-## Anexo A: Glosario Metodológico
+## Annex A: Methodological Glossary
 
-Para efectos de esta investigación exploratoria, se definen los siguientes conceptos clave:
+For the purposes of this exploratory research, the following key concepts are defined:
 
-**1. Estudio de Caso (Case Study)**
-Estrategia de investigación que investiga un fenómeno contemporáneo dentro de su contexto real, especialmente cuando los límites entre el fenómeno y el contexto no son evidentes. En este estudio, cada región (ej. Caso Arica) se trata como un sistema único de interacciones entre clima, infraestructura y regulación.
-*   *Leer más*: [Yin, R. K. (2018). Case Study Research and Applications](https://us.sagepub.com/en-us/nam/case-study-research-and-applications/book250150)
+**1. Case Study**
+A research strategy that investigates a contemporary phenomenon within its real context, especially when the boundaries between the phenomenon and the context are not evident. In this study, each region (e.g., Arica Case) is treated as a unique system of interactions between climate, infrastructure, and regulation.
+*   *Read more*: [Yin, R. K. (2018). Case Study Research and Applications](https://us.sagepub.com/en-us/nam/case-study-research-and-applications/book250150)
 
-**2. Descripción Densa (Thick Description)**
-Concepto acuñado por Clifford Geertz para la antropología, que busca explicar no solo la conducta (el dato), sino su contexto. En nuestra "etnografía digital", aplicamos esto cruzando el *dato frío* (un corte de luz) con el *contexto denso* (una ola de calor, una protesta social, un conflicto territorial), para dotar de significado al número.
-*   *Leer más*: [La interpretación de las culturas (Geertz)](https://antroporecursos.files.wordpress.com/2009/03/geertz-c-1973-la-interpretacion-de-las-culturas.pdf)
+**2. Thick Description**
+Concept coined by Clifford Geertz for anthropology, which seeks to explain not only behavior (the data) but its context. In our "digital ethnography," we apply this by cross-referencing *cold data* (a power outage) with *dense context* (a heatwave, a social protest, a territorial conflict) to give meaning to the number.
+*   *Read more*: [The Interpretation of Cultures (Geertz)](https://antroporecursos.files.wordpress.com/2009/03/geertz-c-1973-la-interpretacion-de-las-culturas.pdf)
 
-**3. Métodos Mixtos (Mixed Methods)**
-Enfoque que integra datos cuantitativos y cualitativos para proveer una comprensión más completa del problema. Aquí, utilizamos estadística descriptiva (Series de Tiempo, SQL) para hallar el *qué*, y marcos teóricos sociotécnicos (Justicia Energética) para explorar el *por qué*.
+**3. Mixed Methods**
+An approach that integrates quantitative and qualitative data to provide a more complete understanding of the problem. Here, we use descriptive statistics (Time Series, SQL) to find the *what*, and sociotechnical theoretical frameworks (Energy Justice) to explore the *why*.

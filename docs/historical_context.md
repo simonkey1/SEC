@@ -1,43 +1,43 @@
-# Contexto Histórico: Cronología de la Estabilidad Eléctrica (2017-2025)
+# Historical Context: Chronology of Electrical Stability (2017-2025)
 
-Este documento cruza las **Anomalías de Datos** detectadas en el análisis con **Eventos Bibliográficos Documentados** (Prensa, Informes SEC/CNE).
-
----
-
-## 2017: La Gran Nevazón
-**Pico Detectado**: Julio 2017 (~340k clientes afectados RM)
-- **Evento**: Nevazón histórica en Santiago (15 Julio).
-- **Cifras**: ~337.000 hogares sin luz en RM.
-- **Causa**: Nieve acumulada botó ramas sobre tendido.
-- **Impacto**: Fallecimiento de una persona, revisión de contratos Enel.
-- **Validación Datos**: Coincide con el pico del gráfico.
-
-## 2019: Estallido Social (Octubre)
-- **Evento**: Ataques a infraestructura (Edificio Enel) y barricadas.
-- **Impacto Eléctrico**: *Limitado*. Los cortes masivos no fueron la norma diaria.
-- **Nota técnica**: Si el gráfico muestra picos gigantes en Oct-Nov 2019, revisar correlación con **Incendios Forestales** (comunes en esa época) o sequía, más que el estallido en sí.
-
-## 2024: El Gran Viento de Agosto (Récord Histórico)
-**Pico Detectado**: Agosto 2024 (>1M clientes simultáneos)
-- **Evento**: Sistema frontal con vientos huracanados (124 km/h) el 2 de Agosto.
-- **Cifras Oficiales**: 
-    - **Peak**: 1.243.904 clientes afectados simultáneamente (Nacional).
-    - **Total Acumulado**: 2.4 millones de hogares con interrupciones en el mes.
-- **Zonas**: RM (Maipú, Las Condes), Araucanía, Biobío.
-- **Consecuencia**: Inicio de proceso de caducidad de concesión a Enel. Ultimatums del Gobierno.
-- **Validación Datos**: El "Pico Infinito" del gráfico es **REAL**. No es un error de datos.
+This document cross-references **Data Anomalies** detected in the analysis with **Documented Bibliographic Events** (Press, SEC/CNE Reports).
 
 ---
 
-## Conclusiones para el Dashboard
-1.  **Validación**: Los picos extremos del dataset (2017, 2024) son eventos climáticos reales, no errores de scraping.
-2.  **Narrativa**: La fragilidad de la red ante el cambio climático (viento/nieve) es el driver principal de la inestabilidad, pesando más que la inversión anual regular.
+## 2017: The Great Snowfall
+**Peak Detected**: July 2017 (~340k affected customers in RM)
+- **Event**: Historical snowfall in Santiago (July 15).
+- **Figures**: ~337,000 households without power in RM.
+- **Cause**: Accumulated snow brought down branches onto power lines.
+- **Impact**: Death of one person, review of Enel contracts.
+- **Data Validation**: Matches the peak in the chart.
 
-## 4. Hitos de Infraestructura (Validación de Impacto)
+## 2019: Social Unrest (October)
+- **Event**: Attacks on infrastructure (Enel Building) and barricades.
+- **Electrical Impact**: *Limited*. Massive outages were not the daily norm.
+- **Technical Note**: If the chart shows giant peaks in Oct-Nov 2019, check correlation with **Forest Fires** (common at that time) or drought, rather than the unrest itself.
 
-| Proyecto | Inauguración | Impacto Validado (Data) | Contexto Cualitativo |
+## 2024: The Great August Wind (Historical Record)
+**Peak Detected**: August 2024 (>1M simultaneous customers)
+- **Event**: Frontal system with hurricane-force winds (124 km/h) on August 2.
+- **Official Figures**: 
+    - **Peak**: 1,243,904 customers affected simultaneously (National).
+    - **Cumulative Total**: 2.4 million households with interruptions in the month.
+- **Zones**: RM (Maipú, Las Condes), Araucanía, Biobío.
+- **Consequence**: Initiation of the concession expiration process for Enel. Government ultimatums.
+- **Data Validation**: The "Infinite Peak" in the chart is **REAL**. It is not a data error.
+
+---
+
+## Conclusions for the Dashboard
+1.  **Validation**: The extreme peaks in the dataset (2017, 2024) are real weather events, not scraping errors.
+2.  **Narrative**: Grid fragility in the face of climate change (wind/snow) is the primary driver of instability, weighing more than regular annual investment.
+
+## 4. Infrastructure Milestones (Impact Validation)
+
+| Project | Inauguration | Validated Impact (Data) | Qualitative Context |
 | :--- | :--- | :--- | :--- |
-| **Cardones-Polpaico** | Jun 2019 | **Lag de 3 Años** (Mejora recién en 2022) | Obra de "Carretera Nacional" (500kV). No solucionó la distribución local ("potholes") en Coquimbo hasta que la red se adaptó. |
-| **Lo Aguirre - C. Navia** | Jul 2019 | **Mejora Inmediata** (-14% cortes) | Refuerzo directo al anillo de Santiago. Alivió la carga crítica en zonas densas. |
-| **Pichirropulli - Tineo** | 2021 | **Éxito en Valdivia** (-17%) | Estabilizó Los Ríos frente a temporales (e.g., Junio 2022). Sin efecto en Puerto Montt (Clima extremo). |
-| **REDENOR** | 2023 | **Éxito Total** (-70% cortes) | Solución quirúrgica para Arica y Tarapacá. Eliminó fallas endémicas del desierto. |
+| **Cardones-Polpaico** | Jun 2019 | **3-Year Lag** (Improvement only in 2022) | "National Highway" project (500kV). Did not solve local distribution ("potholes") in Coquimbo until the grid adapted. |
+| **Lo Aguirre - C. Navia** | Jul 2019 | **Immediate Improvement** (-14% outages) | Direct reinforcement of the Santiago ring. Relieved critical load in dense areas. |
+| **Pichirropulli - Tineo** | 2021 | **Success in Valdivia** (-17%) | Stabilized Los Ríos against storms (e.g., June 2022). No effect in Puerto Montt (Extreme climate). |
+| **REDENOR** | 2023 | **Total Success** (-70% outages) | Surgical solution for Arica and Tarapacá. Eliminated endemic desert failures. |

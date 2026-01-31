@@ -1,18 +1,18 @@
-# Informe Técnico: Ingeniería de Datos y Metodología (Behind the Scenes)
+# Technical Report: Data Engineering and Methodology (Behind the Scenes)
 
-**Proyecto**: Monitor de Interrupciones SEC Chile  
-**Versión**: 1.0 (Enero 2026)
+**Project**: SEC Chile Interruption Monitor  
+**Version**: 1.0 (January 2026)
 
 ---
 
-## 1. Introducción: La Arquitectura del Dato
+## 1. Introduction: Data Architecture
 
-Este documento detalla la ingeniería subyacente que permitió construir el dataset de 6.2 millones de registros utilizado en el *Research Paper*. A diferencia de un análisis estático, este proyecto requirió la construcción de una infraestructura ETL (Extract, Transform, Load) capaz de reconstruir la historia de las interrupciones eléctricas en Chile a partir de "trazos efímeros" publicados por el regulador.
+This document details the underlying engineering that allowed for the construction of the 6.2 million record dataset used in the *Research Paper*. Unlike a static analysis, this project required the construction of an ETL (Extract, Transform, Load) infrastructure capable of reconstructing the history of electrical interruptions in Chile from "ephemeral traces" published by the regulator.
 
 > [!TIP]
-> Para una narrativa más detallada sobre la evolución del proyecto y los desafíos de ingeniería, consulta la **[Crónica Técnica](technical_chronicle.md)**.
+> For a more detailed narrative on project evolution and engineering challenges, consult the **[Technical Chronicle](technical_chronicle.md)**.
 
-### 1.1 Diagrama de Alto Nivel
+### 1.1 High-Level Diagram
 
 ```mermaid
 graph LR
@@ -26,85 +26,85 @@ graph LR
 
 ---
 
-## 2. Estrategia de Extracción (Scraping)
+## 2. Extraction Strategy (Scraping)
 
-### 2.1 El Desafío: Datos Efímeros
-La Superintendencia de Electricidad y Combustibles (SEC) no ofrece un histórico descargable. Solo muestra una "foto" (snapshot) del estado actual del sistema cada 10 minutos. Si no se captura el dato en ese instante, se pierde para siempre.
+### 2.1 The Challenge: Ephemeral Data
+The Superintendence of Electricity and Fuels (SEC) does not offer a downloadable history. It only shows a "snapshot" of the current system state every 10 minutes. If the data is not captured at that moment, it is lost forever.
 
-### 2.2 Solución: Polling Inteligente
-Implementamos un sistema de *polling* que consulta la API pública (`/api/v1/interrupciones`) a intervalos estratégicos.
-*   **Problema**: Bloqueos de IP y Cloudflare.
-*   **Solución**: Rotación de User-Agents y manejo de *Backoff Exponencial* para respetar los límites del servidor.
-
----
-
-## 3. Transformación y Limpieza (Data Engineering)
-
-### 3.1 De Snapshot a Evento
-Uno de los mayores desafíos metodológicos fue definir **"¿Qué es un corte?"**.
-La API devuelve estados: "A las 14:00 hay 500 clientes sin luz en Maipú". A las 14:10 dice "300 clientes".
-*   **Decisión Metodológica**: No podemos saber si los 200 que volvieron son los mismos 200 originales sin un ID de ticket único.
-*   **Lógica de Hashing**: Generamos un `hash_id` único basado en la tupla `(Comuna, Empresa, Fecha, Hora_Inicio, Clientes_Afectados)`. Esto nos permite identificar un evento específico a lo largo de múltiples snapshots sin duplicar la estadística final.
+### 2.2 Solution: Intelligent Polling
+We implemented a *polling* system that queries the public API (`/api/v1/interrupciones`) at strategic intervals.
+*   **Problem**: IP blocks and Cloudflare.
+*   **Solution**: User-Agent rotation and *Exponential Backoff* handling to respect server limits.
 
 ---
 
-## 4. Almacenamiento y Modelado (PostgreSQL)
+## 3. Transformation and Cleaning (Data Engineering)
 
-Utilizamos un esquema **Estrella (Star Schema)** optimizado para consultas analíticas (OLAP):
-*   **Fact Table**: `fact_interrupciones` (6.2M filas).
+### 3.1 From Snapshot to Event
+One of the greatest methodological challenges was defining **"What is an outage?"**.
+The API returns states: "At 14:00 there are 500 customers without power in Maipú." At 14:10 it says "300 customers."
+*   **Methodological Decision**: We cannot know if the 200 who returned are the same as the original 200 without a unique ticket ID.
+*   **Hashing Logic**: We generate a unique `hash_id` based on the tuple `(Commune, Company, Date, Start_Time, Affected_Customers)`. This allows us to identify a specific event over multiple snapshots without duplicating final statistics.
+
+---
+
+## 4. Storage and Modeling (PostgreSQL)
+
+We use a **Star Schema** optimized for analytical queries (OLAP):
+*   **Fact Table**: `fact_interrupciones` (6.2M rows).
 *   **Dimensions**: `dim_geografia`, `dim_empresa`, `dim_tiempo`.
 
-Este diseño permite realizar las agregaciones espaciales (Mapas de Calor) y temporales (Series de Tiempo) en milisegundos, facilitando la generación de los gráficos del paper.
+This design allows for spatial aggregations (Heatmaps) and temporal aggregations (Time Series) in milliseconds, facilitating the generation of paper graphics.
 
 ---
 
-## 5. Visualización del Pipeline (Descriptivo)
+## 5. Pipeline Visualization (Descriptive)
 
-Para garantizar la integridad del proceso, monitoreamos dos métricas clave: el *Volumen de Ingesta* y la *Consistencia Temporal*.
+To ensure process integrity, we monitor two key metrics: *Ingestion Volume* and *Temporal Consistency*.
 
-![Volumen Mensual](figures/tech_fig1_volume.png)
-*Figura T1: Volumen de registros procesados por mes. Se observa la consistencia en la captura histórica desde 2017.*
+![Monthly Volume](figures/tech_fig1_volume.png)
+*Figure T1: Volume of records processed per month. Consistency in historical capture since 2017 is observed.*
 
-![Cobertura Horaria](figures/tech_fig2_coverage.png)
-*Figura T2: Mapa de Calor de Cobertura (Hora vs Día). La distribución uniforme indica que el scraper opera 24/7 sin "puntos ciegos" significativos, validando la estrategia de polling continuo.*
+![Hourly Coverage](figures/tech_fig2_coverage.png)
+*Figure T2: Coverage Heatmap (Hour vs Day). Uniform distribution indicates that the scraper operates 24/7 without significant "blind spots," validating the continuous polling strategy.*
 
 ---
 
-## 6. Arquitectura: "Hybrid Medallion" (Local-First)
+## 6. Architecture: "Hybrid Medallion" (Local-First)
 
-Para resolver los desafíos de costos y escala, implementamos una **Arquitectura Medallion Híbrida**. Este patrón desacopla el procesamiento pesado (Local) del consumo ligero (Cloud):
+To solve cost and scale challenges, we implemented a **Hybrid Medallion Architecture**. This pattern decouples heavy processing (Local) from light consumption (Cloud):
 
 1.  **Bronze Layer (Local - Raw)**:
-    *   *Datos*: `Snapshots JSON` crudos del scraper.
-    *   *Volumen*: ~100 GBs de archivos temporales.
-    *   *Ubicación*: Disco Local (Borde).
+    *   *Data*: Raw `Snapshot JSON` from the scraper.
+    *   *Volume*: ~100 GBs of temporary files.
+    *   *Location*: Local Disk (Edge).
 
 2.  **Silver Layer (Local - Clean)**:
-    *   *Datos*: `fact_interrupciones` en PostgreSQL. Datos deduplicados, limpios y enriquecidos.
-    *   *Proceso*: Hashing MD5 para unicidad.
-    *   *Ubicación*: PostgreSQL Local.
+    *   *Data*: `fact_interrupciones` in PostgreSQL. Deduplicated, clean, and enriched data.
+    *   *Process*: MD5 Hashing for uniqueness.
+    *   *Location*: Local PostgreSQL.
 
 3.  **Gold Layer (Cloud - Business)**:
-    *   *Datos*: `dashboard_stats` en Supabase.
-    *   *Definición*: Métricas agregadas listas para el Dashboard (KPIs, Series de Tiempo pre-calculadas).
-    *   *Ventaja*: Subimos solo ~10MBs de "inteligencia" en lugar de 6GB de "historia", evitando costos de *Request Units* y latencia.
+    *   *Data*: `dashboard_stats` in Supabase.
+    *   *Definition*: Aggregated metrics ready for the Dashboard (KPIs, pre-calculated Time Series).
+    *   *Advantage*: We upload only ~10MBs of "intelligence" instead of 6GB of "history," avoiding *Request Units* costs and latency.
 
 ---
 
-## 7. Diccionario de Datos Clave
+## 7. Key Data Dictionary
 
-### Tabla de Hechos: `fact_interrupciones`
-Corazón del sistema. Cada fila es un "snapshot" de un corte en un momento dado.
+### Fact Table: `fact_interrupciones`
+The heart of the system. Each row is a "snapshot" of an outage at a given time.
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 | :--- | :--- | :--- |
-| `hash_id` | PK (MD5) | `MD5(Comuna + Empresa + Fecha + Hora + Afectados)`. Clave de deduplicación. |
-| `id_tiempo` | FK (Int) | Enlace a `dim_tiempo`. Formato `YYYYMMDD`. |
-| `id_geografia`| FK (Int) | Enlace a `dim_geografia` (Región/Comuna). |
-| `clientes_afectados`| Int | Número de clientes reportados sin servicio. |
-| `hora_interrupcion` | Time | Hora declarada de inicio del corte. |
+| `hash_id` | PK (MD5) | `MD5(Commune + Company + Date + Time + Affected)`. Deduplication key. |
+| `id_tiempo` | FK (Int) | Link to `dim_tiempo`. Format `YYYYMMDD`. |
+| `id_geografia`| FK (Int) | Link to `dim_geografia` (Region/Commune). |
+| `clientes_afectados`| Int | Number of reported customers without service. |
+| `hora_interrupcion` | Time | Declared start time of the outage. |
 
-### Dimensiones Principales
-*   **`dim_geografia`**: Normaliza nombres de comunas (ej: "Valparaiso" -> "VALPARAISO").
-*   **`dim_empresa`**: Unifica razones sociales (ej: "CGE DISTRIBUCION" -> "CGE").
-*   **`dim_tiempo`**: Permite jerarquías temporales (Año > Trimestre > Mes > Día).
+### Main Dimensions
+*   **`dim_geografia`**: Normalizes commune names (e.g., "Valparaiso" -> "VALPARAISO").
+*   **`dim_empresa`**: Unifies business names (e.g., "CGE DISTRIBUCION" -> "CGE").
+*   **`dim_tiempo`**: Allows temporal hierarchies (Year > Quarter > Month > Day).

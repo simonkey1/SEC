@@ -1,141 +1,141 @@
-# Crónica Técnica: Anatomía de una Infraestructura de Investigación
+# Technical Chronicle: Anatomy of a Research Infrastructure
 
-Este documento narra la evolución técnica del proyecto, desde un monitor en tiempo real hasta una infraestructura de datos de alto rendimiento para investigación académica.
+This document narrates the technical evolution of the project, from a near-real-time monitor to a high-performance data infrastructure for academic research.
 
-## 📜 Tabla de Contenidos
-1. [El Origen: El Muro de las IP](#1-el-origen-el-muro-de-las-ip)
-2. [El Pivote: Local-First y Asincronía](#2-el-pivote-local-first-y-asincronía)
-3. [Arquitectura Medallón: Del Caos al Oro](#3-arquitectura-medallón-del-caos-al-oro)
-4. [Transparencia de Datos y EDA](#4-transparencia-de-datos-y-eda)
-5. [Metodología de Estimación de Clientes](#5-metodología-de-estimación-de-clientes)
+## 📜 Table of Contents
+1. [The Origin: The IP Wall](#1-the-origin-the-ip-wall)
+2. [The Pivot: Local-First and Asynchrony](#2-the-pivot-local-first-and-asynchrony)
+3. [Medallion Architecture: From Chaos to Gold](#3-medallion-architecture-from-chaos-to-gold)
+4. [Data Transparency and EDA](#4-data-transparency-and-eda)
+5. [Customer Estimation Methodology](#5-customer-estimation-methodology)
 
 ---
 
-## 1. El Legado: Arquitectura Real-Time (2017-2024)
+## 1. The Legacy: Near-Real-Time Architecture (2017-2024)
 
-Esta sección documenta la arquitectura original de monitoreo continuo, diseñada para operar 24/7 antes del pivote hacia la investigación histórica. Aunque gran parte de este código hoy vive en `scripts/legacy/`, sus patrones de diseño fueron fundamentales para entender la naturaleza del dato.
+This section documents the original continuous monitoring architecture, designed to operate 24/7 before pivoting towards historical research. Although much of this code now lives in `scripts/legacy/`, its design patterns were fundamental to understanding the nature of the data.
 
-### 1.1 Diseño de Alta Disponibilidad & Resiliencia
-El objetivo era mantener un "latido" constante del sistema eléctrico. Para lograrlo en un entorno hostil (bloqueos de IP, timeouts), implementamos patrones de estabilidad robustos.
+### 1.1 High Availability & Resilience Design
+The goal was to maintain a constant "heartbeat" of the electrical system. To achieve this in a hostile environment (IP blocks, timeouts), we implemented robust stability patterns.
 
 #### 🛡️ Circuit Breaker Pattern
-Para evitar la saturación del servidor origen y prevenir bloqueos de IP por fuerza bruta, implementamos un **Circuit Breaker** (`core/circuit_breaker.py`).
-- **Lógica**: Si el scraper detectaba 5 fallos consecutivos (HTTP 500/503 o cambios en el DOM), el circuito se "abría".
-- **Efecto**: El sistema entraba en modo de espera por 30 minutos ("Cooldown"), rechazando cualquier intento nuevo de scraping hasta que el origen se estabilizara.
-- **Evidencia**: Los tests unitarios en `tests/unit/test_circuit_breaker.py` validan esta transición de estados (CLOSED -> OPEN -> HALF-OPEN).
+To avoid overwhelming the source server and prevent brute-force IP blocks, we implemented a **Circuit Breaker** (`core/circuit_breaker.py`).
+- **Logic**: If the scraper detected 5 consecutive failures (HTTP 500/503 or DOM changes), the circuit would "trip" (open).
+- **Effect**: The system would enter a "Cooldown" standby mode for 30 minutes, rejecting any new scraping attempts until the source stabilized.
+- **Evidence**: Unit tests in `tests/unit/test_circuit_breaker.py` validate these state transitions (CLOSED -> OPEN -> HALF-OPEN).
 
-### 1.2 Monitoreo: Fail-Fast & Logs
-En un sistema desatendido, el silencio es el peor error. Implementamos una estrategia de **Fail-Fast**:
-- **Logs Estructurados**: Cada paso del pipeline emitía logs con contexto (Timestamp, Stage, ErrorCode).
-- **Detección de Cambios**: Si la estructura HTML de la SEC cambiaba (algo común), el parser fallaba inmediatamente en lugar de ingerir datos corruptos (`Fast-Fail`).
-- **Health Checks**: Scripts auxiliares (`core/health_check.py`) verificaban periódicamente que el proceso estuviera vivo y escribiendo en la base de datos.
+### 1.2 Monitoring: Fail-Fast & Logs
+In an unattended system, silence is the worst error. We implemented a **Fail-Fast** strategy:
+- **Structured Logs**: Every step of the pipeline emitted logs with context (Timestamp, Stage, ErrorCode).
+- **Change Detection**: If the SEC's HTML structure changed (common occurrence), the parser would fail immediately instead of ingesting corrupt data (`Fast-Fail`).
+- **Health Checks**: Auxiliary scripts (`core/health_check.py`) periodically verified that the process was alive and writing to the database.
 
-### 1.3 Gestión de Datos: Almacenamiento Infinito
-Con un presupuesto de almacenamiento limitado en la nube, no podíamos guardar todo para siempre.
-- **Ventana Deslizante**: La base de datos estaba diseñada para mantener solo 30 días de "datos calientes" para el dashboard en tiempo real.
-- **Cleanup Automático**: El script `scripts/legacy/cleanup_old_data.py` se ejecutaba cronológicamente para:
-    1.  Archivar datos antiguos en formato comprimido (Cold Storage).
-    2.  Eliminar registros raw de la BD operacional para mantener los índices ligeros.
+### 1.3 Data Management: Infinite Storage
+With a limited cloud storage budget, we couldn't save everything forever.
+- **Sliding Window**: The database was designed to keep only 30 days of "hot data" for the near-real-time dashboard.
+- **Automatic Cleanup**: The script `scripts/legacy/cleanup_old_data.py` ran chronologically to:
+    1. Archive old data in compressed format (Cold Storage).
+    2. Delete raw records from the operational DB to keep indices lightweight.
 
-### 1.4 Estrategia de Testing Híbrida
-Mantuvimos una estricta separación de responsabilidades en las pruebas:
-- **Unitarias (`tests/unit/`)**: Validación aislada de componentes lógicos (ej. ¿El Circuit Breaker se abre correctamente?).
-- **Integración (`tests/integration/`)**: Validacion del flujo completo, incluyendo la conexión a base de datos y la ejecución real del cleanup de archivos.
+### 1.4 Hybrid Testing Strategy
+We maintained a strict separation of concerns in testing:
+- **Unit (`tests/unit/`)**: Isolated validation of logic components (e.g., Does the Circuit Breaker open correctly?).
+- **Integration (`tests/integration/`)**: Validation of the full flow, including database connection and actual file cleanup execution.
 
 > [!NOTE]
-> Para detalles de implementación, ver los scripts en `scripts/legacy/` o consultar el [README.md](../README.md) principal.
+> For implementation details, see the scripts in `scripts/legacy/` or consult the main [README.md](../README.md).
 
 ---
 
-## 2. El Pivote: Local-First y Asincronía
-La necesidad de datos históricos para una investigación académica de largo plazo (2017-2025) forzó un rediseño radical. Abandonamos la idea del "ETL continuo en la nube" por un enfoque **Historical Sync Local**.
+## 2. The Pivot: Local-First and Asynchrony
+The need for historical data for a long-term academic research (2017-2025) forced a radical redesign. We abandoned the "continuous cloud ETL" idea for a **Local Historical Sync** approach.
 
-### Ventajas del Cambio
-- **Bypass de Bloqueos**: El scraping desde conexiones residenciales locales resultó ser más resiliente que desde datacenters.
-- **Simplificación**: En lugar de mantener una base de datos "viva" 24/7 con alto costo, optamos por procesar archivos mensuales pesados en ráfagas.
-- **Velocidad**: Implementamos un motor asíncrono en Python (`aiohttp` + `asyncio`) que redujo el tiempo de procesamiento de horas a minutos.
+### Advantages of the Change
+- **Block Bypass**: Scraping from local residential connections proved to be more resilient than from datacenters.
+- **Simplification**: Instead of maintaining a "live" 24/7 database with high costs, we opted to process heavy monthly files in bursts.
+- **Speed**: We implemented an asynchronous engine in Python (`aiohttp` + `asyncio`) that reduced processing time from hours to minutes.
 
 ---
 
-## 3. Arquitectura Medallón: Del Caos al Oro
-Para manejar los ~6.2 millones de registros, implementamos una **Arquitectura Medallón** (Medallion Architecture) adaptada a almacenamiento infinito gratuito.
+## 3. Medallion Architecture: From Chaos to Gold
+To handle the ~6.2 million records, we implemented a **Medallion Architecture** adapted for infinite free storage.
 
 ```mermaid
 graph TD
-    A[Bronze: Raw Snapshots] -->|Deduplicación & Hash MD5| B(Silver: Clean Fact Table)
-    B -->|Pre-agregación Polars| C[Gold: Analysis Ready - Supabase]
-    C -->|Vistas de 30 días| D[Análisis Real-Time]
-    C -->|Historical Parquet| E[Investigación Académica]
+    A[Bronze: Raw Snapshots] -->|Deduplication & MD5 Hash| B(Silver: Clean Fact Table)
+    B -->|Polars Pre-aggregation| C[Gold: Analysis Ready - Supabase]
+    C -->|30-day Views| D[Near-Real-Time Analysis]
+    C -->|Historical Parquet| E[Academic Research]
 ```
 
-- **Bronze Layer**: Guardamos todo el historial raw en la nube (almacenamiento de bajo costo/gratuito).
-- **Silver Layer**: PostgreSQL local donde vive la `fact_interrupciones` deduplicada.
-- **Gold Layer**: Vistas optimizadas y JSONs pre-calculados que se suben a Supabase para alimentar el frontend. Esto nos da "almacenamiento infinito" en términos de análisis, ya que solo mantenemos lo justo y necesario para la visualización activa.
+- **Bronze Layer**: We store the entire raw history in the cloud (low-cost/free storage).
+- **Silver Layer**: Local PostgreSQL where the deduplicated `fact_interrupciones` lives.
+- **Gold Layer**: Optimized views and pre-calculated JSONs uploaded to Supabase to power the frontend. This gives us "infinite storage" in terms of analysis, as we only keep what is necessary for active visualization.
 
-### 3.1 El Puente de Sincronización (The Sync Bridge)
-El script `scripts/etl/sync_dashboard_data.py` es el encargado de materializar la "Capa Gold". Su función es desacoplar el peso del Big Data (Parquet de millones de filas) de la agilidad que requiere el Frontend (JSON livianos).
+### 3.1 The Sync Bridge
+The script `scripts/etl/sync_dashboard_data.py` is responsible for materializing the "Gold Layer". Its function is to decouple the weight of Big Data (Parquet files with millions of rows) from the agility required by the Frontend (lightweight JSONs).
 
-#### Lógica de Transformación
-1.  **Carga**: Lee el archivo `golden_interrupciones.parquet` usando **Polars** (por velocidad).
-2.  **Agregación**: Genera payloads específicos para cada visualización. Por ejemplo, para el *Market Map*, agrupa por región/empresa y calcula el índice de inestabilidad.
-3.  **Upsert**: Se conecta a Supabase vía API y actualiza la tabla `dashboard_stats` usando el ID del dataset (ej: `market_map`, `eda_quality_stats`).
+#### Transformation Logic
+1. **Load**: Read the `golden_interrupciones.parquet` file using **Polars** (for speed).
+2. **Aggregation**: Generate specific payloads for each visualization. For example, for the *Market Map*, group by region/company and calculate the instability index.
+3. **Upsert**: Connect to Supabase via API and update the `dashboard_stats` table using the dataset ID (e.g., `market_map`, `eda_quality_stats`).
 
-> **¿Por qué no conectar el Frontend directo a la BD?**
-> Para proteger la base de datos de análisis de consultas masivas concurrentes. Al pre-calcular y servir JSONs estáticos, el dashboard carga en milisegundos sin estresar el motor de datos principal.
-
----
-
-## 4. Transparencia de Datos y EDA
-La base de nuestra investigación es la transparencia. Aquí presentamos un breve análisis exploratorio (EDA) de nuestra base de datos.
-
-### 4.1 Calidad de los Datos de Interrupciones
-La visualización (Figura 1) muestra una **ausencia total de valores nulos** en la base de datos final. Esto no es accidental, sino resultado de una estrategia de **Defensive Ingestion** en la capa ETL `AsyncPostgreSQLRepository`.
-
-#### Reglas de Imputación (Hard Rules)
-Para evitar corromper la tabla de hechos con datos sucios, aplicamos las siguientes transformaciones *antes* de la inserción. En el corte actual (Total: **731,666 eventos**), la incidencia de estas reglas fue:
-
-1.  **Clientes Afectados**: Si el campo viene vacío o nulo, se imputa con `0`.
-    *   *Incidencia Real*: **0 casos (0.00%)**. La fuente de datos ha demostrado ser consistente en este campo crítico.
-2.  **Geografía/Empresa**: Si el ID de Comuna o Empresa no resuelve contra las dimensiones en caché, se asigna el ID correspondiente a `"DESCONOCIDO"`.
-    *   *Incidencia Real*: **0 casos (0.00%)**. Todas las comunas y empresas reportadas mapearon exitosamente a nuestros diccionarios maestros.
-3.  **Fechas**: Si la `fecha_inicio` no es parseable, se usa el `timestamp_server` como fallback.
-
-Este pre-procesamiento estricto explica la limpieza del dataset: **las reglas de imputación actuaron como "Guardrails" latentes**, garantizando que cualquier anomalía futura sea capturada sin detener el pipeline.
-
-> [!NOTE]
-> **Hipótesis de Calidad en el Origen**: La consistencia perfecta (0 errores de integridad referencial) indica que el endpoint público de la SEC **no expone datos crudos de sensores**, sino que sirve una vista ya procesada y validada por sus propios sistemas internos. Consumimos, en efecto, un dato "Pre-Silver".
-
-### 4.2 El Cruce con Proyectos (SEIA)
-Para validar si la inversión ayuda a la fiabilidad, cruzamos los datos de cortes con la base de proyectos del SEIA relacionados con electricidad.
-
-![Distribución Proyectos](figures/eda_projects_dist.png)
-*Figura 2: Distribución de proyectos de inversión eléctrica analizados para el estudio.*
-
-> [!NOTE]
-> **Minería vs Energía**: Aunque la Región de Antofagasta está dominada por la minería, los proyectos aquí contabilizados son exclusivamente del **Sector Energía** (Líneas de Transmisión, Subestaciones, BESS). Es común que empresas mineras (ej: *Minera Spence*) actúen como titulares de estos proyectos para abastecer sus faenas, pero técnicamente constituyen infraestructura eléctrica.
+> **Why not connect the Frontend directly to the DB?**
+> To protect the analysis database from concurrent massive queries. By pre-calculating and serving static JSONs, the dashboard loads in milliseconds without stressing the primary data engine.
 
 ---
 
-## 5. Metodología de Estimación de Clientes
-Determinar la gravedad de un corte requiere dos cifras: el numerador (afectados) y el denominador (total de clientes). Utilizamos endpoints distintos de la SEC para cada uno:
+## 4. Data Transparency and EDA
+The foundation of our research is transparency. Here we present a brief exploratory data analysis (EDA) of our database.
 
-### A. Denominador: Universo de Clientes (`GetClientesRegional`)
-Para calcular métricas normalizadas (como usuarios afectados por cada 1000 clientes), necesitamos el total de medidores por región.
-- **Fuente**: Endpoint `/GetClientesRegional`.
-- **Frecuencia**: Scrapeo mensual (ver `scripts/scrapers/scrape_clientes_region.py`).
-- **Uso**: Define la "población base" de la región en ese mes.
+### 4.1 Interruption Data Quality
+The visualization (Figure 1) shows a **total absence of null values** in the final database. This is not accidental but the result of a **Defensive Ingestion** strategy in the `AsyncPostgreSQLRepository` ETL layer.
 
-### B. Numerador: Afectación Instantánea (`GetPorFecha`)
-Es el dato "vivo". Proviene del campo `Clientes` dentro del payload JSON de cada interrupción.
-- **Validación**: Comparamos este valor contra el total regional. Si un evento reporta más afectados que el total de la región (anomalía detectada en < 0.01% de casos), se hace *cap* al total regional.
+#### Imputation Rules (Hard Rules)
+To avoid corrupting the fact table with dirty data, we apply the following transformations *before* insertion. In the current slice (Total: **731,666 events**), the incidence of these rules was:
 
-### C. El Algoritmo de "Afectación Neta"
-Un corte de luz no es estático; evoluciona. 
-> *Ejemplo: A las 14:00 hay 500 afectados. A las 14:10 hay 1000. A las 14:20 bajan a 200.*
+1. **Customers Affected**: If the field is empty or null, it is imputed as `0`.
+    * *Real Incidence*: **0 cases (0.00%)**. The data source has proven consistent in this critical field.
+2. **Geography/Company**: If the Commune or Company ID does not resolve against the cached dimensions, it is assigned the corresponding `"UNKNOWN"` ID.
+    * *Real Incidence*: **0 cases (0.00%)**. All reported communes and companies mapped successfully to our master dictionaries.
+3. **Dates**: If `fecha_inicio` is not parseable, `timestamp_server` is used as a fallback.
 
-Nuestra métrica de "Clientes Afectados" para el evento (identificado por `hash_id`) se define como el **Máximo Histórico (High-Water Mark)** registrado durante la vida del evento. Esto previene subestimar la magnitud del incidente si el scraper captura el evento justo cuando se está resolviendo.
+This strict pre-processing explains the dataset's cleanliness: **imputation rules acted as latent "Guardrails"**, ensuring that any future anomalies are captured without stopping the pipeline.
+
+> [!NOTE]
+> **Source Quality Hypothesis**: Perfect consistency (0 referential integrity errors) indicates that the SEC's public endpoint **does not expose raw sensor data**, but instead serves a view already processed and validated by their own internal systems. We are, in effect, consuming "Pre-Silver" data.
+
+### 4.2 Cross-referencing with Projects (SEIA)
+To validate if investment helps reliability, we cross-referenced outage data with the SEIA project database related to electricity.
+
+![Project Distribution](figures/eda_projects_dist.png)
+*Figure 2: Distribution of electrical investment projects analyzed for the study.*
+
+> [!NOTE]
+> **Mining vs Energy**: Although the Antofagasta Region is dominated by mining, the projects counted here are exclusively from the **Energy Sector** (Transmission Lines, Substations, BESS). It is common for mining companies (e.g., *Minera Spence*) to act as owners of these projects to supply their operations, but technically they constitute electrical infrastructure.
+
+---
+
+## 5. Customer Estimation Methodology
+Determining the severity of a blackout requires two figures: the numerator (affected) and the denominator (total customers). We use different SEC endpoints for each:
+
+### A. Denominator: Customer Universe (`GetClientesRegional`)
+To calculate normalized metrics (such as affected users per 1000 customers), we need the total number of meters per region.
+- **Source**: `/GetClientesRegional` endpoint.
+- **Frequency**: Monthly scraping (see `scripts/scrapers/scrape_clientes_region.py`).
+- **Usage**: Defines the region's "base population" for that month.
+
+### B. Numerator: Instantaneous Affectation (`GetPorFecha`)
+This is the "live" data. It comes from the `Clientes` field within the JSON payload of each interruption.
+- **Validation**: We compare this value against the regional total. If an event reports more affected than the total for the region (anomaly detected in < 0.01% of cases), it is capped at the regional total.
+
+### C. The "Net Affectation" Algorithm
+A power outage is not static; it evolves.
+> *Example: At 14:00 there are 500 affected. At 14:10 there are 1000. At 14:20 it drops to 200.*
+
+Our "Affected Customers" metric for the event (identified by `hash_id`) is defined as the **Historical Maximum (High-Water Mark)** recorded during the life of the event. This prevents underestimating the magnitude of the incident if the scraper captures the event just as it is being resolved.
 
 ---
 
 > [!TIP]
-> Todo el código de esta infraestructura está disponible en `scripts/etl/` y `scripts/analysis/`.
+> All code for this infrastructure is available in `scripts/etl/` and `scripts/analysis/`.

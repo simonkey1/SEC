@@ -1,33 +1,33 @@
-# Defensa Técnica de Métricas (Anti-Refutación)
+# Technical Defense of Metrics (Anti-Refutation)
 
-## 1. El Conflicto: ¿Peras con Manzanas?
-El usuario tiene razón. Si llamamos "SAIFI" a nuestra métrica sin apellido, estamos mintiendo técnicamente.
+## 1. The Conflict: Apples to Oranges?
+The user is right. If we call our metric "SAIFI" without any qualifier, we are technically lying.
 
-*   **SAIFI Regulatorio (SEC/CNE)**: Sigue la norma **IEEE 1366**. Aplica el método **Beta 2.5** para **EXCLUIR** los "Días de Evento Mayor" (Temporales).
-    *   *Objetivo*: No multar a la empresa por un terremoto o huracán.
-*   **Nuestro Indicador (Experiencia Usuario)**: Si excluimos los temporales, **borramos el 40% de los cortes** que la gente sufre.
-    *   *Objetivo*: Mostrar la realidad del servicio, llueva o truene.
+*   **Regulatory SAIFI (SEC/CNE)**: Follows the **IEEE 1366** standard. Applies the **Beta 2.5** method to **EXCLUDE** "Major Event Days" (Storms).
+    *   *Goal*: Not to fine a company for an earthquake or hurricane.
+*   **Our Indicator (User Experience)**: If we exclude storms, we **erase 40% of the outages** that people actually suffer.
+    *   *Goal*: To show the reality of the service, come rain or shine.
 
-## 2. La Solución Semántica
-Para no ser "sensacionalistas" ni tecnicamente incorrectos, usaremos terminología precisa en el Dashboard:
+## 2. Semantic Solution
+To avoid being "sensationalist" or technically incorrect, we will use precise terminology on the Dashboard:
 
-| Concepto | Etiqueta en Dashboard | Definición Técnica |
+| Concept | Dashboard Label | Technical Definition |
 | :--- | :--- | :--- |
-| Frecuencia | **Frecuencia de Corte (Raw)** | $\frac{\sum \text{Clientes Afectados}}{\text{Total Clientes}}$ (Incluye Fuerza Mayor) |
-| Duración | **Horas sin Luz (Promedio)** | $\frac{\sum \text{Horas-Cliente}}{\text{Total Clientes}}$ (Incluye Fuerza Mayor) |
-| Comparación | **vs Norma Técnica** | *"Nota: Este valor incluye eventos climáticos extremos excluidos de la norma regulatoria para reflejar la experiencia real."* |
+| Frequency | **Outage Frequency (Raw)** | $\frac{\sum \text{Affected Customers}}{\text{Total Customers}}$ (Includes Force Majeure) |
+| Duration | **Hours without Power (Average)** | $\frac{\sum \text{Customer-Hours}}{\text{Total Customers}}$ (Includes Force Majeure) |
+| Comparison | **vs Technical Standard** | *"Note: This value includes extreme weather events excluded from the regulatory standard to reflect real user experience."* |
 
-## 3. Rigor Matemático (Proxy)
-Dado que no tenemos el número exacto de clientes *por alimentador* minuto a minuto, usamos una aproximación validada:
+## 3. Mathematical Rigor (Proxy)
+Since we do not have the exact number of customers *per feeder* minute by minute, we use a validated approximation:
 
-$$ \text{Frecuencia Regional} = \frac{\sum (\text{Eventos} \times \text{Afectados})}{\text{Población Estimada (Censo/ proyeccion)}} $$
+$$ \text{Regional Frequency} = \frac{\sum (\text{Events} \times \text{Affected})}{\text{Estimated Population (Census/Projection)}} $$
 
-*   **Margen de Error**: < 5% en agragados anuales (Validado vs Anuarios SEC).
-*   **Defensa**: "No es el SAIFI de multa, es el SAIFI de percepción".
+*   **Margin of Error**: < 5% in annual aggregates (Validated vs. SEC Yearbooks).
+*   **Defense**: "It is not the SAIFI for fines; it is the SAIFI of perception."
 
-## 4. Inversión (Ajuste por PPA)
-Para el "Social ROI", ajustamos la inversión a **USD 2024** usando el IPC de EE.UU. (o valor nominal si el dataset ya está en USD corrientes), para no comparar peras de 2017 con manzanas de 2024.
-*   *Nota*: El dataset SEIA trae valores nominales estimados al momento de aprobación.
+## 4. Investment (Adjustment for PPP)
+For "Social ROI," we adjust investment to **2024 USD** using the US CPI (or nominal value if the dataset is already in current USD), to avoid comparing 2017 apples with 2024 oranges.
+*   *Note*: The SEIA dataset provides nominal values estimated at the time of approval.
 
-## Conclusión
-Nuestro relato es **"La Realidad del Usuario"**, no la **"Planilla del Regulador"**. Mientras seamos transparentes con la etiqueta "Incluye Eventos Climáticos", somos irrefutables.
+## Conclusion
+Our story is **"The User's Reality"**, not the **"Regulator's Spreadsheet"**. As long as we are transparent with the "Includes Weather Events" label, we are irrefutable.
